@@ -12,3 +12,4 @@ djangorestframework-simplejwt
 django-ratelimit
 drf-yasg
 phonenumbers
+django-environ

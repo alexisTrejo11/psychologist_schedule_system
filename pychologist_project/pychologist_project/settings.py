@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
+import environ
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,16 +22,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-&i-#6))x5_$#b9f#q4)#cev!^859c*31+7d*h2t)+@p)x-r*7*'
 
-# SECURITY WARNING: don't run with debug turned on in production!
+env = environ.Env()
+environ.Env.read_env()
+
+SECRET_KEY = env('SECRET_KEY')
+DEBUG = env.bool('DEBUG', default=False)
+
+
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
-
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -37,6 +41,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    'rest_framework',
+    'rest_framework_simplejwt',
 
     'users',
     'therapy',
@@ -53,6 +60,13 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
 
 ROOT_URLCONF = 'pychologist_project.urls'
 
@@ -73,6 +87,13 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'pychologist_project.wsgi.application'
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),  # Tiempo de vida del access token
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),    # Tiempo de vida del refresh token
+    'ROTATE_REFRESH_TOKENS': True,                 # Rota los refresh tokens al usarlos
+    'BLACKLIST_AFTER_ROTATION': True,              # Inhabilita refresh tokens antiguos
+}
 
 
 # Database
