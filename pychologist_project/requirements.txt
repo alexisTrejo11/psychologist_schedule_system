@@ -1,0 +1,14 @@
+Django==5.1.2
+djangorestframework
+psycopg2-binary
+python-dateutil
+pytest
+pytest-django
+pytest-mockito
+factory-boy
+injector
+pymemcache
+djangorestframework-simplejwt
+django-ratelimit
+drf-yasg
+phonenumbers
