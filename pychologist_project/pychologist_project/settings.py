@@ -29,7 +29,7 @@ environ.Env.read_env()
 SECRET_KEY = env('SECRET_KEY')
 DEBUG = env.bool('DEBUG', default=False)
 
-
+AUTH_USER_MODEL = 'users.User'  
 DEBUG = True
 
 ALLOWED_HOSTS = []
@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
+
 
     'users',
     'therapy',

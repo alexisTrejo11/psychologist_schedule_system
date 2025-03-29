@@ -13,7 +13,7 @@ class AuthService:
     def validate_singup_credentials(self, data):
         self.user_service.validate_unique_user_credentials(data)
 
-    def procces_signup(self, data):
+    def process_signup(self, data):
         user_role = data.get('user_role')
         user = None
         match user_role:
@@ -28,7 +28,6 @@ class AuthService:
 
         session = self.__create_session(user) 
         return session
-
 
 
     def validate_login_credentials(self, data):
@@ -51,7 +50,7 @@ class AuthService:
         return user
     
 
-    def procces_login(self, user):
+    def process_login(self, user):
         session = self.__create_session(user) 
         self.user_service.update_last_login(user)
         return session

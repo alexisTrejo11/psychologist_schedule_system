@@ -20,9 +20,10 @@ class SignupView(APIView):
 
         try:
             auth_service = AuthService()
+            auth_service.validate_singup_credentials(serializer.validated_data)
             session = auth_service.process_signup(serializer.validated_data)
             return Response(session, status=status.HTTP_201_CREATED)
-        except ValueError as e:
+        except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -36,10 +37,10 @@ class LoginView(APIView):
 
         try:
             auth_service = AuthService()
-            session = auth_service.process_login(
-                email=serializer.validated_data['email'],
-                password=serializer.validated_data['password']
-            )
+
+            user = auth_service.validate_login_credentials(serializer.validated_data)
+            session = auth_service.process_login(user)
+            
             return Response(session, status=status.HTTP_200_OK)
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)

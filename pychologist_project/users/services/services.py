@@ -1,23 +1,32 @@
 from django.core.exceptions import ValidationError
 from ..models import User, Patient, Therapist
+from ..models import Therapist
 from django.utils import timezone
+import re
 
 class UserService:
     def __init__(self):
         self.user_model = User
 
+    def get_user_by_id(self, user_id):
+        user = self.user_model.objects.filter(id=user_id).first()
+
+        return user
+
     def create_user(self, data):
         """
         Crea un nuevo usuario después de validar los datos.
         """
+        self.__validate_password(data.get('password'))
         user = self.__generate_user(data)
-        user.save()  
+        user.save()
+
         return user
     
     def update_last_login(self, user: User):
-        user.last_login = timezone.now
+        user.last_login = timezone.now()  
         user.is_active = True
-        user.save()
+        user.save(update_fields=['last_login', 'is_active'])
 
 
     def validate_unique_user_credentials(self, data):
@@ -34,12 +43,22 @@ class UserService:
         """
         Genera una instancia de User con los datos proporcionados.
         """
-        return self.user_model.objects.create_user(
+        user = self.user_model.objects.create_user(
             email=data['email'],
-            password=data['password'],
             role=data.get('role', 'PATIENT'),
             phone=data.get('phone', '')
         )
+
+        user.set_password(data['password'])
+        return user
+
+
+    def __validate_password(self, password):
+        password_regex = r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$"
+        if not re.match(password_regex, password):
+            raise ValueError(
+                "La contraseña debe tener al menos 8 caracteres, incluir al menos una letra y un número."
+            )
     
 class PatientService:
     @staticmethod
@@ -61,7 +80,6 @@ class PatientService:
         )
         return patient
 
-from ..models import Therapist
 
 class TherapistService:
     @staticmethod
