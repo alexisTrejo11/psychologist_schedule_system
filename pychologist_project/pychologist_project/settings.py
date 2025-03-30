@@ -91,10 +91,11 @@ TEMPLATES = [
 WSGI_APPLICATION = 'pychologist_project.wsgi.application'
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),  # Tiempo de vida del access token
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),    # Tiempo de vida del refresh token
-    'ROTATE_REFRESH_TOKENS': True,                 # Rota los refresh tokens al usarlos
-    'BLACKLIST_AFTER_ROTATION': True,              # Inhabilita refresh tokens antiguos
+    'TOKEN_OBTAIN_SERIALIZER': 'ruta.a.tu.CustomTokenObtainPairSerializer',
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),  
+    'ROTATE_REFRESH_TOKENS': True,               
+    'BLACKLIST_AFTER_ROTATION': True,            
 }
 
 

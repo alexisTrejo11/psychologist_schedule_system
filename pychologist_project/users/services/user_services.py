@@ -1,6 +1,5 @@
 from django.core.exceptions import ValidationError
-from ..models import User, Patient, Therapist
-from ..models import Therapist
+from ..models import User
 from django.utils import timezone
 import re
 
@@ -60,43 +59,3 @@ class UserService:
                 "La contraseña debe tener al menos 8 caracteres, incluir al menos una letra y un número."
             )
     
-class PatientService:
-    @staticmethod
-    def create_patient(data):
-        """
-        Crea un nuevo paciente asociado a un usuario.
-        """
-        user_data = data.pop('user', None)
-        if not user_data:
-            raise ValueError("Los datos del usuario son obligatorios")
-
-        user_service = UserService()
-        user = user_service.create_user(user_data)
-
-        patient = Patient.objects.create(
-            user=user,
-            name=data.get('name', ''),
-            description=data.get('description', '')
-        )
-        return patient
-
-
-class TherapistService:
-    @staticmethod
-    def create_therapist(data):
-        """
-        Crea un nuevo terapeuta asociado a un usuario.
-        """
-        user_data = data.pop('user', None)
-        if not user_data:
-            raise ValueError("Los datos del usuario son obligatorios")
-
-        user_service = UserService()
-        user = user_service.create_user(user_data)
-
-        therapist = Therapist.objects.create(
-            user=user,
-            license_number=data.get('license_number'),
-            specialization=data.get('specialization')
-        )
-        return therapist

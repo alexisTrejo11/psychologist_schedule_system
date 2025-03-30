@@ -1,8 +1,8 @@
-from .services import UserService, TherapistService, PatientService
+from .user_services import UserService
+from .therapist_service import TherapistService
+from .patient_service import PatientService
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from django.contrib.auth import authenticate
-
-
 
 class AuthService:
     def __init__(self):
@@ -101,4 +101,3 @@ class AuthService:
             'refresh_token': str(refresh_token),
             'access_token': str(access_token),
         }
-
