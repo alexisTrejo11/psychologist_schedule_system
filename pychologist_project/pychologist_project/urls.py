@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from therapy.views import TherapySessionViewSet
 from users.views.patient_views import PatientViewSet
 from users.views.therapist_views import TherapistViewSet
 from users.views.user_views import UserViewSet
@@ -15,6 +16,8 @@ router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
 router.register(r'patients', PatientViewSet, basename='patient')
 router.register(r'therapists', TherapistViewSet, basename='therapist')
+router.register(r'therapy-sessions', TherapySessionViewSet, basename='therapy-session')
+
 
 urlpatterns = [
     # Admin

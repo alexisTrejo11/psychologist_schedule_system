@@ -1,5 +1,6 @@
 from django.db import models
 from django.forms import ValidationError
+from django.utils import timezone
 
 class TherapySession(models.Model):
     STATUS_CHOICES = [
@@ -20,11 +21,18 @@ class TherapySession(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
     cancelled_at = models.DateTimeField(null=True, blank=True)
 
     def clean(self):
         if self.end_time <= self.start_time:
             raise ValidationError('La hora de finalización debe ser posterior a la de inicio')
+        
+    def soft_delete(self):
+        if self.deleted_at != None:
+            raise ValidationError('La sesion ya fue borrada(soft)')
+        self.deleted_at = timezone.now()
+
 
     def __str__(self):
         return f"Sesión {self.start_time.strftime('%Y-%m-%d %H:%M')}"
