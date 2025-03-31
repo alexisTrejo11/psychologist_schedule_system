@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 from datetime import timedelta
 import environ
+import os
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -21,16 +22,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
-
-
 env = environ.Env()
 environ.Env.read_env()
 
 SECRET_KEY = env('SECRET_KEY')
 DEBUG = env.bool('DEBUG', default=False)
-
 AUTH_USER_MODEL = 'users.User'  
-DEBUG = True
 
 ALLOWED_HOSTS = []
 
@@ -62,9 +59,13 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'core.auditlog.middleware.AuditLogMiddleware',
+
 ]
 
 REST_FRAMEWORK = {
+    # JWT
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
@@ -78,6 +79,9 @@ REST_FRAMEWORK = {
         'anon': '40/minute', 
         'user': '60/minute',  
     },
+
+    # Excpetions
+    'EXCEPTION_HANDLER': 'core.exceptions.exception_handlers.custom_exception_handler',
 }
 
 
@@ -109,6 +113,23 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,            
 }
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'level': 'DEBUG',
+        },
+    },
+    'loggers': {
+        'audit_logger': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+    },
+}
+
 # Twilio
 TWILIO_ACCOUNT_SID = env('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = env('TWILIO_AUTH_TOKEN')
@@ -132,7 +153,7 @@ CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
         'LOCATION': '127.0.0.1:11211',  
-        'TIMEOUT': 60 * 15, 
+        'TIMEOUT': 60 * 15,
         'OPTIONS': {
             'no_delay': True,
             'ignore_exc': True,

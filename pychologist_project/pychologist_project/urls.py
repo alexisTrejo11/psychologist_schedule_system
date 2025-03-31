@@ -5,6 +5,7 @@ from therapy.views import TherapySessionViewSet
 from users.views.patient_views import PatientViewSet
 from users.views.therapist_views import TherapistViewSet
 from users.views.user_views import UserViewSet
+from core.auditlog.views import AuditLogListView
 from payments.views import PaymentListCreateView, PaymentRetrieveUpdateDestroyView
 from users.views.auth_views import (
     SignupView,
@@ -53,4 +54,8 @@ urlpatterns = [
     # Payment 
     path('payments/', PaymentListCreateView.as_view(), name='payment-list-create'),
     path('payments/<int:payment_id>/', PaymentRetrieveUpdateDestroyView.as_view(), name='payment-detail'),
+
+    # Audit log
+    path('audit-logs/', AuditLogListView.as_view(), name='audit-log-list'),
+
 ]

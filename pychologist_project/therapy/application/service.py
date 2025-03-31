@@ -3,6 +3,7 @@ from typing import Dict, List, Optional
 from ..domain.entities import TherapySession
 from ..domain.interfaces import ISessionRepository
 from .validators import SessionValidator
+from core.exceptions.custom_exceptions import EntityNotFoundError, BusinessLogicError, InvalidOperationError
 
 class SessionService:
     def __init__(self, repository: ISessionRepository):
@@ -12,7 +13,7 @@ class SessionService:
     def get_session(self, session_id: int) -> TherapySession:
         session = self.repository.get_by_id(session_id)
         if not session:
-            raise ValueError("Sesión no encontrada")
+            raise EntityNotFoundError("Sesión no encontrada")
         return session
 
     def search_sessions(self, filters: Dict) -> List[TherapySession]:
