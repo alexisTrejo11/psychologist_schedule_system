@@ -3,9 +3,10 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from django.forms import ValidationError
-from .service import SessionService
+from .application.service import SessionService
 from .models import TherapySession
 from .serializers import TherapySessionSerializer
+from .infrastructure.repositories import DjangoSessionRepository as sessionRepository
 
 class TherapySessionViewSet(ModelViewSet):
     """
@@ -13,7 +14,7 @@ class TherapySessionViewSet(ModelViewSet):
     """
     serializer_class = TherapySessionSerializer
     queryset = TherapySession.objects.all()
-    service = SessionService()
+    service = SessionService(sessionRepository)
 
     def create(self, request, *args, **kwargs):
         """
@@ -86,7 +87,7 @@ class TherapySessionViewSet(ModelViewSet):
         """
         try:
             filters = request.query_params.dict()
-            sessions = self.service.search_session(filters)
+            sessions = self.service.search_sessions(filters)
             serializer = self.get_serializer(sessions, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except ValidationError as e:

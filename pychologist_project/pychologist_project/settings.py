@@ -128,6 +128,20 @@ DATABASES = {
     }
 }
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.PyMemcacheCache',
+        'LOCATION': '127.0.0.1:11211',  
+        'TIMEOUT': 60 * 15, 
+        'OPTIONS': {
+            'no_delay': True,
+            'ignore_exc': True,
+            'default_noreply': False,
+            'max_pool_size': 4,
+            'use_pooling': True,
+        },
+    }
+}
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Password validation
