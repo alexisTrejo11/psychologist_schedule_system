@@ -81,7 +81,8 @@ class Patient(models.Model):
         return self.name
 
 class Therapist(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='therapist_profile')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='therapist_profile', null=True)
+    name = models.CharField(max_length=100, default='')
     license_number = models.CharField(max_length=50, unique=True)
     specialization = models.CharField(max_length=100)
     

@@ -16,9 +16,11 @@ class TherapistViewSet(ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         try:
-            therapist_data = request.data
-            therapist = TherapistService.create_therapist(therapist_data)
-            serializer = self.get_serializer(therapist)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            serializer = TherapistSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            
+            therapist = TherapistService.create_therapist(serializer.validated_data)
+            therapist_output = self.get_serializer(therapist).data
+            return Response(therapist_output, status=status.HTTP_201_CREATED)
         except ValidationError as e:
             return Response({"error": e.message}, status=status.HTTP_400_BAD_REQUEST)

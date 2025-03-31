@@ -21,9 +21,13 @@ class TherapySessionViewSet(ModelViewSet):
         """
         try:
             data = request.data
-            session = self.service.schedule_session(data)
-            serializer = self.get_serializer(session)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            serializer = TherapySessionSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            session = self.service.schedule_session(serializer.validated_data)
+            
+            session_output = self.get_serializer(session).data
+            return Response(session_output, status=status.HTTP_201_CREATED)
         except ValidationError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 

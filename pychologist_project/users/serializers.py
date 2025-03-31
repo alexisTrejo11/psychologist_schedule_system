@@ -68,11 +68,11 @@ class PatientSerializer(serializers.ModelSerializer):
 
 
 class TherapistSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
+    user = UserSerializer(required=False)
 
     class Meta:
         model = Therapist
-        fields = ['id', 'user', 'license_number', 'specialization']
+        fields = '__all__'
         read_only_fields = ['id']
 
     def create(self, validated_data):

@@ -3,7 +3,6 @@ from django.db import transaction
 from .models import Payment
 from django.db.models import Q
 
-
 class PaymentService:
     """
     Servicio para manejar operaciones relacionadas con los pagos.
@@ -132,3 +131,64 @@ class PaymentService:
         
         with transaction.atomic():
             payment.delete()
+
+
+import stripe
+from django.conf import settings
+from .models import Payment, StripeProduct
+class StripeService:
+    @staticmethod
+    def create_payment_intent(amount: float, currency: str = "usd") -> dict:
+        """
+        Crea un PaymentIntent en Stripe.
+        Retorna el client_secret para procesar el pago.
+        """
+        try:
+            intent = stripe.PaymentIntent.create(
+                amount=int(amount * 100),  # Stripe maneja cantidades en centavos
+                currency=currency,
+                payment_method_types=["card"],
+            )
+            return {
+                "client_secret": intent.client_secret,
+                "payment_intent_id": intent.id,
+            }
+        except stripe.error.StripeError as e:
+            raise ValueError(f"Error al crear el pago: {str(e)}")
+
+    @staticmethod
+    def confirm_payment(payment_intent_id: str) -> bool:
+        """
+        Confirma un pago en Stripe.
+        """
+        try:
+            intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+            if intent.status == "succeeded":
+                # Actualiza el estado en tu base de datos
+                Payment.objects.filter(stripe_payment_intent_id=payment_intent_id).update(
+                    status="COMPLETED"
+                )
+                return True
+            return False
+        except stripe.error.StripeError as e:
+            raise ValueError(f"Error al confirmar el pago: {str(e)}")
+
+    @staticmethod
+    def create_stripe_product(name: str, price: float) -> StripeProduct:
+        """
+        Crea un producto en Stripe y lo vincula a tu base de datos.
+        """
+        try:
+            product = stripe.Product.create(name=name)
+            price = stripe.Price.create(
+                product=product.id,
+                unit_amount=int(price * 100),
+                currency="usd",
+            )
+            return StripeProduct.objects.create(
+                name=name,
+                stripe_product_id=product.id,
+                price=price.unit_amount_decimal / 100,
+            )
+        except stripe.error.StripeError as e:
+            raise ValueError(f"Error al crear el producto en Stripe: {str(e)}")

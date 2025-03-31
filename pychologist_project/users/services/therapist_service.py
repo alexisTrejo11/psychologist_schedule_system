@@ -9,16 +9,15 @@ class TherapistService:
         """
         Crea un nuevo terapeuta asociado a un usuario.
         """
-        user_data = data.pop('user', None)
-        if not user_data:
-            raise ValueError("Los datos del usuario son obligatorios")
-
-        user_service = UserService()
-        user = user_service.create_user(user_data)
-
         therapist = Therapist.objects.create(
-            user=user,
             license_number=data.get('license_number'),
+            name = data.get('name'),
             specialization=data.get('specialization')
         )
+
+        user_data = data.pop('user', None)
+        if user_data:
+            user_service = UserService()
+            user = user_service.create_user(user_data)
+            therapist.user = user
         return therapist

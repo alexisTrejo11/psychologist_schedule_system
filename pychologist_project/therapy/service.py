@@ -98,14 +98,18 @@ class SessionService:
         self.__validate_schedule(data)
         self.__validate_not_patient_conflict(data)
 
-        seesion = TherapySession.objects.create(
-            therapist=data.get('therapist'),
-            patients=data.get('patients'),
-            status=data.get('status'),
-            notes=data.get('notes'),
-        )
+        session = TherapySession.objects.create(
+                therapist=data.get('therapist'),
+                start_time=data.get('start_time'),
+                end_time=data.get('end_time'),
+                status=data.get('status', 'PENDING'), 
+                notes=data.get('notes', ''),  
+            )
+        
+        patients = data.get('patients', [])
+        session.patients.set(patients) 
 
-        return seesion
+        return session
     
     def update_status(self, id, status):
         session = self.get_session_by_id(id)

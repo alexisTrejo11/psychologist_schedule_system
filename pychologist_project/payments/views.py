@@ -67,3 +67,37 @@ class PaymentRetrieveUpdateDestroyView(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
+        
+
+
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+import stripe
+from .models import Payment
+from django.conf import settings
+
+
+@csrf_exempt
+def stripe_webhook(request):
+    payload = request.body
+    sig_header = request.META["HTTP_STRIPE_SIGNATURE"]
+    event = None
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+        )
+    except ValueError as e:
+        return HttpResponse(status=400)
+    except stripe.error.SignatureVerificationError as e:
+        return HttpResponse(status=400)
+
+    # Manejar eventos
+    if event["type"] == "payment_intent.succeeded":
+        payment_intent = event["data"]["object"]
+        # Actualiza el pago en tu base de datos
+        Payment.objects.filter(
+            stripe_payment_intent_id=payment_intent.id
+        ).update(status="COMPLETED")
+
+    return HttpResponse(status=200)
