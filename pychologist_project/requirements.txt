@@ -10,7 +10,7 @@ injector
 pymemcache
 djangorestframework-simplejwt
 django-ratelimit
-drf-yasg
+drf-spectacular
 phonenumbers
 django-environ
 django-crontab 

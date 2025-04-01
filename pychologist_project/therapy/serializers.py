@@ -5,6 +5,7 @@ from users.models import Patient, Therapist
 class TherapySessionSerializer(serializers.ModelSerializer):
     therapist = serializers.PrimaryKeyRelatedField(
         queryset=Therapist.objects.all(),
+        required=False
     )
     patients = serializers.PrimaryKeyRelatedField(
         many=True,

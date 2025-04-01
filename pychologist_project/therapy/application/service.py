@@ -2,9 +2,8 @@ from datetime import datetime
 from typing import Dict, List
 from ..domain.entities import TherapySession
 from ..domain.interfaces import ISessionRepository
-from .validators import SessionValidator
+from ..domain.validators import SessionValidator
 from core.exceptions.custom_exceptions import EntityNotFoundError
-import logging
 from ..models import TherapySession as DjangoTherapySession
 
 class SessionService:

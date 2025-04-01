@@ -45,6 +45,8 @@ INSTALLED_APPS = [
 
     'django_crontab',
 
+    'drf_spectacular',
+
     'users',
     'therapy',
     'payments',
@@ -70,6 +72,9 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+
+
     # Rate limitng
     'DEFAULT_THROTTLE_CLASSES': [
         'rest_framework.throttling.AnonRateThrottle',
@@ -82,6 +87,14 @@ REST_FRAMEWORK = {
 
     # Excpetions
     'EXCEPTION_HANDLER': 'core.exceptions.exception_handler.custom_exception_handler',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Psychologist Schedule System API',
+    'DESCRIPTION': 'API for managing therapy sessions and payments.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SECURITY': [{'Bearer': []}], 
 }
 
 
