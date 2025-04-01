@@ -130,7 +130,7 @@ class TherapistSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'id': {'help_text': 'Unique therapist ID.'},
             'name': {'help_text': 'Name of the therapist.'},
-            'license_number': {'help_text': "Therapist's license number.",},
+            'license_number': {'help_text': "Therapist's license number.", 'unique': True},
             'specialization': {'help_text': "Therapist's specialization."},
         }
 

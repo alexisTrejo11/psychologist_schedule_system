@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles/registry_styles.css ">
+    <title>Document</title>
+</head>
+<body>
+      <!-- Login Template -->
+    <div class="auth-container" id="login-template">
+        <div class="auth-header">
+            <div class="auth-logo">
+                <i class="fas fa-brain"></i>
+            </div>
+            <h1>Iniciar Session</h1>
+            <p>Accede a tu cuenta</p>
+        </div>
+    
+    <div class="error-message" id="loginError">
+        Correo Electrónico o contraseña incorrectas. Por favor, intenta de nuevo.
+    </div>
+    
+    <form id="loginForm">
+        <div class="form-group">
+            <label for="email">Correo Electronico</label>
+            <input type="email" id="email" name="email", placeholder="tu@email.com" required>
+        </div>
+    </form>
+
+    <form id="loginForm">
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password", placeholder="••••••••" required>
+            <span class="toggle-password" id="toggleSignupPassword">
+                <i class="far fa-eye"></i>
+            </span>
+        </div>
+
+        <div class="password-strength">
+            <div class="passsword-strength-meter" id="passwordStrength"></div>
+        </div>
+        <div class="password-feedback" id="passwordFeedback">
+            Usa al menos 8 caracteres, incluyendo letras, numeros y simbolos
+        </div>
+
+        <div class="form-group">
+            <label for="specialty">Especialidad</label>
+            <input type="text" id="specialty" placeholder="Psicologia Clinica">
+        </div>
+
+        <div class="remember-me">
+            <input type="checkbox" id="terms" name="terms" required>
+            <label for="terms">
+                Acepto los <a href="#" tabindex="_blank">Terminos de Servicio</a> y la <a href="#" target="_blank">Politica de Privacidad</a>
+            </label>
+        </div>
+
+        <button type="submit" class="btn">Iniciar Session</button>
+        
+        <div class="divider">
+            <span>o</span>
+        </div>
+
+        <div class="social-login">
+            <button type="button" class="social-btn google-btn">
+                <i class="fab fa-google">Google</i>
+            </button>
+        </div>
+
+        <div class="auth-link">
+            ¿No tienes una cuenta? <a href="signup.html">Regístrate</a>
+        </div>
+    </form>
+    </div>
+    
+    <!-- Signup Template (hidden by default, switch using JavaScript) -->
+  <div class="auth-container" id="signup-template" style="display: none;">
+    <div class="auth-header">
+      <div class="auth-logo">
+        <i class="fas fa-brain"></i>
+      </div>
+      <h1>Crear Cuenta</h1>
+      <p>Únete a MindCare y comienza a gestionar tus sesiones</p>
+    </div>
+    
+    <div class="success-message" id="signupSuccess">
+      ¡Registro exitoso! Por favor revisa tu email para verificar tu cuenta.
+    </div>
+    
+    <div class="error-message" id="signupError">
+      No se pudo completar el registro. Por favor, intenta de nuevo.
+    </div>
+    
+    <form id="signupForm">
+      <div class="form-group">
+        <label for="fullName">Nombre Completo</label>
+        <input type="text" id="fullName" name="fullName" placeholder="Dr. Juan Pérez" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="signupEmail">Correo Electrónico</label>
+        <input type="email" id="signupEmail" name="email" placeholder="tu@email.com" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="signupPassword">Contraseña</label>
+        <div class="password-field">
+          <input type="password" id="signupPassword" name="password" placeholder="••••••••" required>
+          <span class="toggle-password" id="toggleSignupPassword">
+            <i class="far fa-eye"></i>
+          </span>
+        </div>
+        <div class="password-strength">
+          <div class="password-strength-meter" id="passwordStrength"></div>
+        </div>
+        <div class="password-feedback" id="passwordFeedback">
+          Usa al menos 8 caracteres, incluyendo letras, números y símbolos.
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="confirmPassword">Confirmar Contraseña</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="••••••••" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="specialty">Especialidad</label>
+        <input type="text" id="specialty" name="specialty" placeholder="Psicología Clínica, Terapia de pareja, etc.">
+      </div>
+      
+      <div class="remember-me">
+        <input type="checkbox" id="terms" name="terms" required>
+        <label for="terms">
+          Acepto los <a href="#" target="_blank">Términos de Servicio</a> y la <a href="#" target="_blank">Política de Privacidad</a>
+        </label>
+      </div>
+      
+      <button type="submit" class="btn">Crear Cuenta</button>
+      
+      <div class="divider">
+        <span>O</span>
+      </div>
+      
+      <div class="social-login">
+        <button type="button" class="social-btn google-btn">
+          <i class="fab fa-google"></i> Google
+        </button>
+        <button type="button" class="social-btn linkedin-btn">
+          <i class="fab fa-linkedin-in"></i> LinkedIn
+        </button>
+      </div>
+      
+      <div class="auth-link">
+        ¿Ya tienes una cuenta? <a href="login.html">Iniciar Sesión</a>
+      </div>
+    </form>
+  </div>
+
+
+
+</body>
+</html>
