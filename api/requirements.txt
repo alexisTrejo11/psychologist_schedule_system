@@ -16,3 +16,4 @@ django-environ
 django-crontab 
 twilio
 stripe
+django-cors-headers

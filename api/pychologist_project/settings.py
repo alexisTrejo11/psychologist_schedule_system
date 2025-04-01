@@ -45,6 +45,8 @@ INSTALLED_APPS = [
 
     'django_crontab',
 
+    'corsheaders',
+
     'drf_spectacular',
 
     'users',
@@ -54,6 +56,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -73,7 +76,6 @@ REST_FRAMEWORK = {
     ),
 
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-
 
     # Rate limitng
     'DEFAULT_THROTTLE_CLASSES': [
@@ -97,6 +99,7 @@ SPECTACULAR_SETTINGS = {
     'SECURITY': [{'Bearer': []}], 
 }
 
+CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = 'pychologist_project.urls'
 
