@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'corsheaders',
     
     'rest_framework',
     'rest_framework_simplejwt',
@@ -54,6 +56,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -151,6 +154,8 @@ TWILIO_PHONE_NUMBER = env('TWILIO_PHONE_NUMBER')
 CRONJOBS = [
     ('*/15 * * * *', 'your_app.management.commands.send_reminders.Command'),
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
