@@ -90,5 +90,5 @@ class Therapist(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Dr(a). {self.user.email}"
+        return f"Dr(a). {self.name}"
 

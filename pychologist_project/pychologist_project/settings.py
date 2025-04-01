@@ -81,7 +81,7 @@ REST_FRAMEWORK = {
     },
 
     # Excpetions
-    'EXCEPTION_HANDLER': 'core.exceptions.exception_handlers.custom_exception_handler',
+    'EXCEPTION_HANDLER': 'core.exceptions.exception_handler.custom_exception_handler',
 }
 
 

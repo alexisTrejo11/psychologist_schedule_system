@@ -2,8 +2,8 @@ from rest_framework.views import exception_handler
 from rest_framework import status
 from rest_framework.response import Response
 import logging
+from rest_framework.exceptions import ValidationError
 from .custom_exceptions import EntityNotFoundError, BusinessLogicError, InvalidOperationError
-
 
 audit_logger = logging.getLogger('audit_logger')
 
@@ -16,7 +16,26 @@ def custom_exception_handler(exc, context):
     view = context.get('view')
     view_name = view.__class__.__name__ if view else 'unknown'
 
-    if isinstance(exc, EntityNotFoundError):
+    if isinstance(exc, ValidationError):
+        audit_logger.warning(
+            f"ValidationError en vista {view_name}: {str(exc)}, Usuario: {user}, IP: {ip_address}"
+        )
+        response = Response(
+            {"error": "Datos inválidos.", "details": exc.detail},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    elif isinstance(exc, ValueError):
+        audit_logger.error(
+            f"ValueError en vista {view_name}: {str(exc)}, Usuario: {user}, IP: {ip_address}",
+            exc_info=True
+        )
+        response = Response(
+            {"error": str(exc)},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    elif isinstance(exc, EntityNotFoundError):
         audit_logger.warning(
             f"EntityNotFoundError en vista {view_name}: {str(exc)}, Usuario: {user}, IP: {ip_address}"
         )
@@ -24,6 +43,7 @@ def custom_exception_handler(exc, context):
             {"error": str(exc)},
             status=status.HTTP_404_NOT_FOUND
         )
+
     elif isinstance(exc, BusinessLogicError):
         audit_logger.error(
             f"BusinessLogicError en vista {view_name}: {str(exc)}, Usuario: {user}, IP: {ip_address}",
@@ -33,6 +53,7 @@ def custom_exception_handler(exc, context):
             {"error": str(exc)},
             status=status.HTTP_400_BAD_REQUEST
         )
+
     elif isinstance(exc, InvalidOperationError):
         audit_logger.error(
             f"InvalidOperationError en vista {view_name}: {str(exc)}, Usuario: {user}, IP: {ip_address}",
@@ -40,9 +61,10 @@ def custom_exception_handler(exc, context):
         )
         response = Response(
             {"error": str(exc)},
-            status=status.HTTP_409_CONFLICT 
+            status=status.HTTP_409_CONFLICT
         )
-    else:
+
+    elif response is None:
         audit_logger.error(
             f"Excepción no manejada en vista {view_name}: {str(exc)}, Usuario: {user}, IP: {ip_address}",
             exc_info=True

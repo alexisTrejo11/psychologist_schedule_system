@@ -91,7 +91,14 @@ class DjangoSessionRepository(ISessionRepository):
         django_session.status = session.status
         django_session.notes = session.notes
         django_session.save()
-        django_session.patients.set(session.patient_ids)
+        if hasattr(session, 'patients') and session.patients is not None:
+                if hasattr(session.patients, 'values_list'):  
+                    patient_ids = list(session.patients.values_list('id', flat=True))
+                else:
+                    patient_ids = session.patients
+
+                django_session.patients.set(patient_ids)
+
         return self._convert_to_entity(django_session)
 
     def delete(self, session_id: int) -> None:
@@ -105,5 +112,5 @@ class DjangoSessionRepository(ISessionRepository):
             end_time=django_session.end_time,
             status=django_session.status,
             notes=django_session.notes,
-            patient_ids=list(django_session.patients.values_list('id', flat=True))
+            patients=list(django_session.patients.values_list('id', flat=True))
         )

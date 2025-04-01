@@ -34,7 +34,8 @@ class TherapySessionViewSet(ModelViewSet):
 
         session = self.service.get_session(int(session_id))
         audit_logger.info(f"Session successfully retrieved with ID: {session_id}")
-        return Response({"session": session.__dict__})
+        
+        return Response({"session": self.get_serializer(session).data})
 
     def create(self, request, *args, **kwargs):
         """
@@ -45,10 +46,12 @@ class TherapySessionViewSet(ModelViewSet):
 
         audit_logger.info(f"POST request to create a new session, User: {user}, IP: {ip_address}")
 
-        data = request.data
-        serializer = TherapySessionSerializer(data=data)
+        serializer = TherapySessionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
         session = self.service.schedule_session(serializer.validated_data)
         audit_logger.info(f"New session created successfully with ID: {session.id}, User: {user}, IP: {ip_address}")
+        
         return Response(self.get_serializer(session).data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
@@ -62,35 +65,16 @@ class TherapySessionViewSet(ModelViewSet):
         audit_logger.info(f"PUT request to update session ID: {session_id}, User: {user}, IP: {ip_address}")
 
         instance = self.get_object()
-        data = request.data
+        serializer = TherapySessionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        if 'start_time' in data or 'end_time' in data:
-            self.service.update_schedule(instance.id, data)
-        if 'patients' in data:
-            self.service.update_patients(instance.id, data)
+        audit_logger.info(serializer.validated_data)
+        session_updated = self.service.update(instance, serializer.validated_data)
 
-        instance.refresh_from_db()
         audit_logger.info(f"Session updated successfully with ID: {session_id}, User: {user}, IP: {ip_address}")
-        return Response(self.get_serializer(instance).data, status=status.HTTP_200_OK)
+        return Response(self.get_serializer(session_updated).data, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'], url_path='update-status')
-    def update_status(self, request, pk=None):
-        """
-        Update the status of a therapy session.
-        """
-        user = request.user if request.user.is_authenticated else None
-        ip_address = request.META.get('REMOTE_ADDR')
-
-        audit_logger.info(f"POST request to update status for session ID: {pk}, User: {user}, IP: {ip_address}")
-
-        new_status = request.data.get('status')
-        if not new_status:
-            raise ValidationError("The 'status' field is required.")
-
-        session = self.service.update_status(pk, new_status)
-        audit_logger.info(f"Status updated successfully for session ID: {pk}, New Status: {new_status}, User: {user}, IP: {ip_address}")
-        return Response(self.get_serializer(session).data, status=status.HTTP_200_OK)
-
+   
     @action(detail=True, methods=['post'], url_path='soft-delete')
     def soft_delete(self, request, pk=None):
         """

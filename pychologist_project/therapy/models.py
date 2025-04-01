@@ -32,8 +32,7 @@ class TherapySession(models.Model):
         if self.deleted_at != None:
             raise ValidationError('La sesion ya fue borrada(soft)')
         self.deleted_at = timezone.now()
-
-
+    
     def __str__(self):
         return f"Sesión {self.start_time.strftime('%Y-%m-%d %H:%M')}"
 
