@@ -12,7 +12,7 @@ class TherapySession(models.Model):
     ]
     
     therapist = models.ForeignKey('therapists.Therapist', on_delete=models.CASCADE)  
-    patients = models.ManyToManyField('users.Patient', through='TherapyParticipant')  
+    patients = models.ManyToManyField('patients.Patient', through='TherapyParticipant')  
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='PENDING')
@@ -38,7 +38,7 @@ class TherapySession(models.Model):
 
 class TherapyParticipant(models.Model):
     therapy_session = models.ForeignKey(TherapySession, on_delete=models.CASCADE)
-    patient = models.ForeignKey('users.Patient', on_delete=models.CASCADE) 
+    patient = models.ForeignKey('patients.Patient', on_delete=models.CASCADE) 
     attended = models.BooleanField(default=False)
     
     class Meta:

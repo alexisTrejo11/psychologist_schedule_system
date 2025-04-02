@@ -7,7 +7,7 @@ from rest_framework.permissions import AllowAny
 
 from rest_framework.routers import DefaultRouter
 from therapy.views import TherapySessionViewSet
-from users.views.patient_manager_views import PatientViewSet
+from patients.views import PatientViewSet
 from therapists.views import TherapistViewSet
 from users.views.user_manager_views import UserViewSet
 from core.auditlog.views import AuditLogListView
