@@ -1,5 +1,5 @@
 from .user_services import UserService
-from .therapist_service import TherapistService
+from therapists.services import TherapistService
 from .patient_service import PatientService
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from django.contrib.auth import authenticate

@@ -3,9 +3,9 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
-from ..models import Therapist
-from ..serializers import TherapistSerializer
-from ..services.therapist_service import TherapistService
+from .models import Therapist
+from .serializers import TherapistSerializer
+from .services import TherapistService
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 from core.api_response.response import ApiResponse
 import logging

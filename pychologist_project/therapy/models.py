@@ -11,7 +11,7 @@ class TherapySession(models.Model):
         ('RESCHEDULED', 'Reagendada'),
     ]
     
-    therapist = models.ForeignKey('users.Therapist', on_delete=models.CASCADE)  
+    therapist = models.ForeignKey('therapists.Therapist', on_delete=models.CASCADE)  
     patients = models.ManyToManyField('users.Patient', through='TherapyParticipant')  
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()

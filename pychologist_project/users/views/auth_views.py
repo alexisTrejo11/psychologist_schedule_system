@@ -170,4 +170,3 @@ class RefreshSessionView(APIView):
             formatted_response = ApiResponse.format_response(data=None, success=False, message=str(e))
             return Response(formatted_response, status=status.HTTP_400_BAD_REQUEST)
 
-

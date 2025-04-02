@@ -1,10 +1,9 @@
-from ..models import Patient, Therapist, User
-from ..models import Therapist
+from users.models import User
+from .models import Therapist
 from therapy.models import TherapySession
 from core.exceptions.custom_exceptions import EntityNotFoundError
 from django.utils import timezone
-from ..serializers import HomeData
-
+from users.serializers import HomeData
 
 class TherapistService:
     @staticmethod

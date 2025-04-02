@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from phonenumber_field.modelfields import PhoneNumberField
 from core.exceptions.custom_exceptions import EntityNotFoundError
+from therapists.models import Therapist
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -89,7 +90,6 @@ class User(AbstractBaseUser):
     def _get_jwt_roles(self):
         return getattr(self, '_roles', [])
 
-
 class Patient(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='patient_profile', null=True)
     name = models.CharField(max_length=100)
@@ -119,15 +119,4 @@ class Patient(models.Model):
     def __str__(self):
         return self.name
 
-class Therapist(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='therapist_profile', null=True)
-    name = models.CharField(max_length=100, default='')
-    license_number = models.CharField(max_length=50, unique=True)
-    specialization = models.CharField(max_length=100)
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"Dr(a). {self.name}"
 

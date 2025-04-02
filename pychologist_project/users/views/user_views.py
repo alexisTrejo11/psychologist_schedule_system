@@ -1,7 +1,8 @@
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from ..services.user_services import UserService
-from ..serializers import TherapistHomeDataSerializer, UserSerializer, UserProfileSerializer
+from ..serializers import UserSerializer, UserProfileSerializer
+from therapists.serializers import TherapistHomeDataSerializer
 from core.api_response.response import ApiResponse
 from rest_framework.response import Response
 from rest_framework import status

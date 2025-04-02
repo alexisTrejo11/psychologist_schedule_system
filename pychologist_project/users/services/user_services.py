@@ -1,7 +1,6 @@
 from django.core.exceptions import ValidationError
 from ..models import User
-from ..services.therapist_service import TherapistService
-from therapy.models import TherapyParticipant
+from therapists.services import TherapistService
 from django.utils import timezone
 import re
 from ..serializers import HomeData
