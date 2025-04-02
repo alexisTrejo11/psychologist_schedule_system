@@ -4,8 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema, OpenApiTypes
-from ..serializers import SignupSerializer, LoginSerializer
-from ..services.auth_services import AuthService
+from .....core.presentation.api.serializers.serializers import SignupSerializer, LoginSerializer
 from core.api_response.response import ApiResponse
 import logging
 
@@ -34,18 +33,38 @@ class SignupView(APIView):
         if not serializer.is_valid():
             audit_logger.warning(f"SignupView: Invalid input data: {serializer.errors}")
             formatted_response = ApiResponse.format_response(data=serializer.errors, success=False, message="Invalid input data.")
+           
             return Response(formatted_response, status=status.HTTP_400_BAD_REQUEST)
         try:
-            auth_service = AuthService()
-            auth_service.validate_singup_credentials(serializer.validated_data)
-            session = auth_service.process_signup(serializer.validated_data)
-            audit_logger.info(f"SignupView: User successfully registered. Session data: {session}")
+            from .....core.data.repositories.django_user_repository import DjangoUserRepository
+            from .....core.data.service.token_service import TokenService
+            from .....core.domain.usecase.auth_use_case import SignupUseCase
+            from therapists.services import TherapistService
+            from patients.services import PatientService
+
+            user_repository = DjangoUserRepository()
+            token_service = TokenService()
+            therapist_repository = TherapistService()
+            patient_repository = PatientService()
+            signup_use_case = SignupUseCase(
+                user_repository=user_repository,
+                therapist_repository=therapist_repository,
+                patient_repository=patient_repository,  
+                token_service=token_service
+            )
+
+            session = SignupUseCase.execute(signup_use_case, serializer.validated_data)
+
+            audit_logger.info(f"SignupView: User successfully registered.")
+            
             formatted_response = ApiResponse.format_response(data=session, success=True, message="User successfully registered.")
             return Response(formatted_response, status=status.HTTP_201_CREATED)
         except ValidationError as e:
             audit_logger.error(f"SignupView: ValidationError: {e}")
+            
             formatted_response = ApiResponse.format_response(data=None, success=False, message=str(e))
             return Response(formatted_response, status=status.HTTP_400_BAD_REQUEST)
+
 
 class LoginView(APIView):
     """
@@ -70,19 +89,32 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data)
         if not serializer.is_valid():
             audit_logger.warning(f"LoginView: Invalid input data: {serializer.errors}")
+            
             formatted_response = ApiResponse.format_response(data=serializer.errors, success=False, message="Invalid input data.")
             return Response(formatted_response, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            auth_service = AuthService()
-            user = auth_service.validate_login_credentials(serializer.validated_data)
-            session = auth_service.process_login(user)
-            audit_logger.info(f"LoginView: User successfully logged in. Session data: {session}")
-            formatted_response = ApiResponse.format_response(data=session, success=True, message="User successfully logged in.")
-            return Response(formatted_response, status=status.HTTP_200_OK)
-        except ValueError as e:
-            audit_logger.error(f"LoginView: Authentication error: {e}")
-            formatted_response = ApiResponse.format_response(data=None, success=False, message=str(e))
-            return Response(formatted_response, status=status.HTTP_401_UNAUTHORIZED)
+        
+        from .....core.domain.usecase.auth_use_case import LoginUseCase
+        from .....core.data.service.token_service import TokenService
+        from .....core.data.service.django_auth_service import DjangoAuthService
+        from .....core.data.repositories.django_user_repository import DjangoUserRepository
+
+        user_repository = DjangoUserRepository()
+        auth_service = DjangoAuthService()
+        token_service = TokenService()
+        
+        login_use_case = LoginUseCase(
+            user_repository=user_repository,
+            auth_service = auth_service,
+            token_service = token_service
+        )
+        
+        session = login_use_case.execute(serializer.validated_data)
+        
+        audit_logger.info(f"LoginView: User successfully logged in.")
+        
+        formatted_response = ApiResponse.format_response(data=session, success=True, message="User successfully logged in.")
+        return Response(formatted_response, status=status.HTTP_200_OK)
+
 
 class LogoutView(APIView):
     """
@@ -114,18 +146,23 @@ class LogoutView(APIView):
         refresh_token = request.data.get('refresh_token')
         if not refresh_token:
             audit_logger.warning(f"LogoutView: Refresh token is required.")
+            
             formatted_response = ApiResponse.format_response(data=None, success=False, message="Refresh token is required")
             return Response(formatted_response, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            auth_service = AuthService()
-            auth_service.logout(refresh_token)
-            audit_logger.info(f"LogoutView: User successfully logged out.")
-            formatted_response = ApiResponse.format_response(data={"message": "Session successfully logged out"}, success=True, message="User successfully logged out.")
-            return Response(formatted_response, status=status.HTTP_200_OK)
-        except ValueError as e:
-            audit_logger.error(f"LogoutView: ValueError: {e}")
-            formatted_response = ApiResponse.format_response(data=None, success=False, message=str(e))
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        from .....core.data.service.token_service import TokenService
+        from .....core.domain.usecase.auth_use_case import LogoutUseCase
+
+        token_service = TokenService()
+        
+        logout_use_case = LogoutUseCase(token_service)
+        logout_use_case.execute(refresh_token)
+        
+        audit_logger.info(f"LogoutView: User successfully logged out.")
+        
+        formatted_response = ApiResponse.format_response(data={"message": "Session successfully logged out"}, success=True, message="User successfully logged out.")
+        return Response(formatted_response, status=status.HTTP_200_OK)
+        
 
 class RefreshSessionView(APIView):
     """
@@ -157,16 +194,24 @@ class RefreshSessionView(APIView):
         refresh_token = request.data.get('refresh_token')
         if not refresh_token:
             audit_logger.warning(f"RefreshSessionView: Refresh token is required.")
+            
             formatted_response = ApiResponse.format_response(data=None, success=False, message="Refresh token is required.")
             return Response(formatted_response, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            auth_service = AuthService()
-            session_refreshed = auth_service.refresh_session(refresh_token)
-            audit_logger.info(f"RefreshSessionView: Session successfully refreshed.")
-            formatted_response = ApiResponse.format_response(data=session_refreshed, success=True, message="Session successfully refreshed.")
-            return Response(formatted_response, status=status.HTTP_200_OK)
-        except ValueError as e:
-            audit_logger.error(f"RefreshSessionView: ValueError: {e}")
-            formatted_response = ApiResponse.format_response(data=None, success=False, message=str(e))
-            return Response(formatted_response, status=status.HTTP_400_BAD_REQUEST)
+
+        from .....core.domain.usecase.auth_use_case import RefreshTokenUseCase
+        from .....core.data.service.token_service import TokenService
+        from .....core.data.repositories.django_user_repository import DjangoUserRepository
+
+        user_repository = DjangoUserRepository()
+        token_service = TokenService()
+        
+        refresh_token_use_case = RefreshTokenUseCase(token_service=token_service, user_repository=user_repository)
+        
+        session_refreshed = refresh_token_use_case.execute(refresh_token)
+        
+        audit_logger.info(f"RefreshSessionView: Session successfully refreshed.")
+        
+        formatted_response = ApiResponse.format_response(data=session_refreshed, success=True, message="Session successfully refreshed.")
+        return Response(formatted_response, status=status.HTTP_200_OK)
+
 

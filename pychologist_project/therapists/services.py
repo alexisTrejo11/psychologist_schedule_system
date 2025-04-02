@@ -3,7 +3,7 @@ from .models import Therapist
 from therapy.models import TherapySession
 from core.exceptions.custom_exceptions import EntityNotFoundError
 from django.utils import timezone
-from users.serializers import HomeData
+from users.core.presentation.api.serializers.serializers import HomeData
 
 class TherapistService:
     @staticmethod

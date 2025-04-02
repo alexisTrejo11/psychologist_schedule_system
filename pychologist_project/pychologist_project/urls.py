@@ -12,12 +12,8 @@ from therapists.views import TherapistViewSet
 from users.views.user_manager_views import UserViewSet
 from core.auditlog.views import AuditLogListView
 from payments.views import PaymentListCreateView, PaymentRetrieveUpdateDestroyView
-from users.views.auth_views import (
-    SignupView,
-    LoginView,
-    LogoutView,
-    RefreshSessionView,
-)
+
+from users.core.presentation.api.controllers.auth_views import SignupView, LoginView, LogoutView, RefreshSessionView
 from users.views.user_views import HomeView, ProfileView
 
 router = DefaultRouter()
@@ -25,7 +21,6 @@ router.register(r'users', UserViewSet, basename='user')
 router.register(r'patients', PatientViewSet, basename='patient')
 router.register(r'therapists', TherapistViewSet, basename='therapist')
 router.register(r'therapy-sessions', TherapySessionViewSet, basename='therapy-session')
-
 
 urlpatterns = [
     # Admin

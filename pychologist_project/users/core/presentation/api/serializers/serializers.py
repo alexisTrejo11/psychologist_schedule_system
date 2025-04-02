@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Patient, Therapist
+from .....models import User, Patient, Therapist
 
 class SignupSerializer(serializers.Serializer):
     email = serializers.EmailField(

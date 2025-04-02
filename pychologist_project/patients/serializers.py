@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from users.serializers import UserSerializer
+from users.core.presentation.api.serializers.serializers import UserSerializer
 from users.models import User
 from .models import Patient
 

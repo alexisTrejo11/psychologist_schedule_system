@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from ..models import User
-from ..serializers import UserSerializer
+from ..core.presentation.api.serializers.serializers import UserSerializer
 from ..services.user_services import UserService
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi

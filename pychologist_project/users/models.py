@@ -68,7 +68,7 @@ class User(AbstractBaseUser):
         else:
             return ""
         
-    # TODO: Move
+    # TODO: Move?
     @property
     def set_name(self, new_name):
         if self.role == 'ADMIN':

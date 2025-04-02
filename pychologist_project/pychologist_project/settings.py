@@ -51,8 +51,8 @@ INSTALLED_APPS = [
 
     'users',
     'therapy',
-    'payments',
     'therapists',
+    'payments',
     'patients',
     'core',
 ]

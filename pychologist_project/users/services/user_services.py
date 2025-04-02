@@ -3,7 +3,7 @@ from ..models import User
 from therapists.services import TherapistService
 from django.utils import timezone
 import re
-from ..serializers import HomeData
+from ..core.presentation.api.serializers.serializers import HomeData
 from core.exceptions.custom_exceptions import InvalidOperationError
 
 class UserService:
