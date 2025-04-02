@@ -5,7 +5,7 @@ class EntityNotFoundError(Exception):
     def __init__(self, entity_name: str, entity_id: int = None):
         self.entity_name = entity_name
         self.entity_id = entity_id
-        message = f"{entity_name} no encontrado"
+        message = f"{entity_name} not found"
         if entity_id:
             message += f" con ID: {entity_id}"
         super().__init__(message)

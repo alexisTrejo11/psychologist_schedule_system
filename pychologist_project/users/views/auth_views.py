@@ -3,7 +3,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiTypes
 from ..serializers import SignupSerializer, LoginSerializer
 from ..services.auth_services import AuthService
 from core.api_response.response import ApiResponse
@@ -169,3 +169,5 @@ class RefreshSessionView(APIView):
             audit_logger.error(f"RefreshSessionView: ValueError: {e}")
             formatted_response = ApiResponse.format_response(data=None, success=False, message=str(e))
             return Response(formatted_response, status=status.HTTP_400_BAD_REQUEST)
+
+

@@ -7,9 +7,9 @@ from rest_framework.permissions import AllowAny
 
 from rest_framework.routers import DefaultRouter
 from therapy.views import TherapySessionViewSet
-from users.views.patient_views import PatientViewSet
-from users.views.therapist_views import TherapistViewSet
-from users.views.user_views import UserViewSet
+from users.views.patient_manager_views import PatientViewSet
+from users.views.therapist_manager_views import TherapistViewSet
+from users.views.user_manager_views import UserViewSet
 from core.auditlog.views import AuditLogListView
 from payments.views import PaymentListCreateView, PaymentRetrieveUpdateDestroyView
 from users.views.auth_views import (
@@ -18,6 +18,7 @@ from users.views.auth_views import (
     LogoutView,
     RefreshSessionView,
 )
+from users.views.user_views import HomeView, ProfileView
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
@@ -40,6 +41,10 @@ urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('refresh-session/', RefreshSessionView.as_view(), name='refresh_session'),
+
+    # User
+    path('home/', HomeView.as_view(), name='home'),
+    path('profiles/', ProfileView.as_view(), name='profile'),
 
     # General APIs
     path('', include(router.urls)),

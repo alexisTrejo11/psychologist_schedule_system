@@ -65,7 +65,7 @@ class AuthService:
             token.blacklist()
         except Exception as e:
             raise ValueError(f"Error al cerrar sesión: {str(e)}")
-
+        
 
     def refresh_session(self, refresh_token):
         """
@@ -101,3 +101,4 @@ class AuthService:
             'refresh_token': str(refresh_token),
             'access_token': str(access_token),
         }
+    

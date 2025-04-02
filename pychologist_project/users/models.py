@@ -3,6 +3,7 @@ from django.forms import ValidationError
 from django.utils import timezone
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from phonenumber_field.modelfields import PhoneNumberField
+from core.exceptions.custom_exceptions import EntityNotFoundError
 
 class UserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -27,6 +28,7 @@ class User(AbstractBaseUser):
     ]
     
     email = models.EmailField(unique=True)
+    profile_picture = models.CharField(default="", max_length=255)
     phone = PhoneNumberField(blank=True)
     role = models.CharField(max_length=15, choices=ROLE_CHOICES)
     is_active = models.BooleanField(default=True)
@@ -46,6 +48,43 @@ class User(AbstractBaseUser):
     @property
     def roles(self):
         return self._get_jwt_roles()
+    
+    @property
+    def name(self) -> str:
+        if self.role == 'ADMIN':
+            return 'ADMIN'
+        elif self.role == 'PATIENT':
+            try:
+                Patient.objects.get(user=self.user)
+            except Patient.DoesNotExist:
+                return ""
+        elif self.role == 'THERAPSIT':
+            try:
+                Therapist.objects.get(user=self.user)
+            except Therapist.DoesNotExist:
+                return ""
+        else:
+            return ""
+        
+    # TODO: Move
+    @property
+    def set_name(self, new_name):
+        if self.role == 'ADMIN':
+            return
+        elif self.role == 'PATIENT':
+            try:
+                patient = Patient.objects.get(user=self.user)
+                patient.name = new_name
+                patient.save()
+            except Patient.DoesNotExist:
+                raise EntityNotFoundError("Patient don't found")
+        elif self.role == 'THERAPSIT':
+            try:
+                Therapist.objects.get(user=self.user)
+            except Therapist.DoesNotExist:
+                raise EntityNotFoundError("Therapist don't found")
+        else:
+            return ""
 
     def _get_jwt_roles(self):
         return getattr(self, '_roles', [])

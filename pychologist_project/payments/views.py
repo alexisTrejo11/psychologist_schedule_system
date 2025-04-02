@@ -9,7 +9,6 @@ class PaymentListCreateView(APIView):
     """
     View to list and create payments.
     """
-
     @extend_schema(
         summary="List payments",
         description="Lists payments with dynamic filters. If no filters are provided, all payments are returned.",

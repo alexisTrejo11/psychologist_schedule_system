@@ -87,7 +87,7 @@ class LoginSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'email', 'phone', 'role', 'is_active', 'created_at']
+        fields = ['id', 'email', 'phone', 'role', 'is_active', 'created_at' , 'name']
         read_only_fields = ['id', 'created_at']
         extra_kwargs = {
             'id': {'help_text': 'Unique user ID.'},
@@ -97,6 +97,27 @@ class UserSerializer(serializers.ModelSerializer):
             'is_active': {'help_text': "Indicates if the user is active."},
             'created_at': {'help_text': "Date and time the user was created (ISO 8601 format)."},
         }
+
+    def get_name(self, obj) -> str:
+        """
+        Método para calcular el valor del campo 'name'.
+        """
+        if obj.role == 'ADMIN':
+            return 'ADMIN'
+        elif obj.role == 'PATIENT':
+            try:
+                patient = Patient.objects.get(user=obj)
+                return patient.name
+            except Patient.DoesNotExist:
+                return ""
+        elif obj.role == 'THERAPIST':
+            try:
+                therapist = Therapist.objects.get(user=obj)
+                return therapist.name
+            except Therapist.DoesNotExist:
+                return ""
+        else:
+            return ""
 
 
 class PatientSerializer(serializers.ModelSerializer):
@@ -138,3 +159,33 @@ class TherapistSerializer(serializers.ModelSerializer):
         user_data = validated_data.pop('user')
         user = User.objects.create_user(**user_data, role='THERAPIST')
         return Therapist.objects.create(user=user, **validated_data)
+    
+
+class TherapistHomeDataSerializer(serializers.Serializer):
+    therapist_patient_count = serializers.IntegerField()
+    incoming_session_count = serializers.IntegerField()
+    name = serializers.CharField()
+    profile_picture = serializers.CharField()
+
+
+class HomeData:
+    def __init__(self, therapist_patient_count, incoming_session_count, therapist_name, therapist_photo):
+        self.therapist_patient_count = therapist_patient_count
+        self.incoming_session_count = incoming_session_count
+        self.name = therapist_name
+        self.profile_picture = therapist_photo
+
+    def to_dict(self):
+        return {
+            "therapist_patient_count": self.therapist_patient_count,
+            "incoming_session_count": self.incoming_session_count,
+            "name": self.name,
+            "profile_picture": self.profile_picture,
+        }
+    
+
+class UserProfileSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=255, required=False)
+    email = serializers.EmailField(required=False)
+    phone = serializers.CharField(max_length=15, required=False)
+    profile_picture = serializers.ImageField(required=False)
