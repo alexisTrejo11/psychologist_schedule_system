@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from users.core.presentation.api.serializers.serializers import UserSerializer
-from .models import Therapist
+from .....models import Therapist
 from users.models import User
 
 class TherapistSerializer(serializers.ModelSerializer):
@@ -23,7 +23,7 @@ class TherapistSerializer(serializers.ModelSerializer):
         return Therapist.objects.create(user=user, **validated_data)
     
 
-class TherapistHomeDataSerializer(serializers.Serializer):
+class HomeDataSerializer(serializers.Serializer):
     therapist_patient_count = serializers.IntegerField()
     incoming_session_count = serializers.IntegerField()
     name = serializers.CharField()

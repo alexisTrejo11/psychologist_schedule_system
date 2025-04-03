@@ -2,7 +2,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from ..services.user_services import UserService
 from ..core.presentation.api.serializers.serializers import UserSerializer, UserProfileSerializer
-from therapists.serializers import TherapistHomeDataSerializer
+from therapists.core.infrastructure.adapters.serializers.serializers import HomeDataSerializer
 from core.api_response.response import ApiResponse
 from rest_framework.response import Response
 from rest_framework import status
@@ -17,7 +17,7 @@ class HomeView(APIView):
         home_data = self.user_service.get_user_home_data(user)
 
         formatted_response = ApiResponse.format_response(
-            data=TherapistHomeDataSerializer(home_data).data,
+            data=HomeDataSerializer(home_data).data,
             success=True,
             message="User Home Data Successfully Retrieved"
         )
