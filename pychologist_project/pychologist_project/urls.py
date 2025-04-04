@@ -6,15 +6,15 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, Sp
 from rest_framework.permissions import AllowAny
 
 from rest_framework.routers import DefaultRouter
-from therapy.views import TherapySessionViewSet
 from patients.views import PatientViewSet
 from therapists.core.infrastructure.adapters.views.therpist_manager_views import TherapistViewSet
-from users.views.user_manager_views import UserViewSet
 from core.auditlog.views import AuditLogListView
 from payments.views import PaymentListCreateView, PaymentRetrieveUpdateDestroyView
+from therapy.views import TherapySessionViewSet
 
+from users.core.presentation.api.controllers.user_manager_views import UserViewSet
 from users.core.presentation.api.controllers.auth_views import SignupView, LoginView, LogoutView, RefreshSessionView
-from users.views.user_views import HomeView, ProfileView
+from users.core.presentation.api.controllers.user_views import HomeView, ProfileView
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
