@@ -6,7 +6,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, Sp
 from rest_framework.permissions import AllowAny
 
 from rest_framework.routers import DefaultRouter
-from patients.views import PatientViewSet
+from patients.core.infrastructure.api.views.views import PatientViewSet
 from therapists.core.infrastructure.adapters.views.therpist_manager_views import TherapistViewSet
 from core.auditlog.views import AuditLogListView
 from payments.views import PaymentListCreateView, PaymentRetrieveUpdateDestroyView
