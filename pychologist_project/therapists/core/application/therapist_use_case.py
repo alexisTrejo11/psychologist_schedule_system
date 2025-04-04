@@ -28,6 +28,13 @@ class CreateTherapistUseCase:
         return self.therapist_repository.create(therapist_data)
 
 
+class GetTherapistSessionsUseCase:
+    def __init__(self, therapist_repository):
+        self.therapist_repository = therapist_repository
+    
+    def execute(self, therapist_data):
+        return self.therapist_repository.create(therapist_data)
+
 class UpdateTherapistUseCase:
     def __init__(self, therapist_repository):
         self.therapist_repository = therapist_repository

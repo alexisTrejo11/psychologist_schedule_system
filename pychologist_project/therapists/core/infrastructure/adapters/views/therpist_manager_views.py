@@ -5,9 +5,9 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 from core.api_response.response import ApiResponse
 from .....models import Therapist
-from ....infrastructure.adapters.serializers.serializers import TherapistSerializer
+from ..serializers.serializers import TherapistSerializer
 from ....application.therapist_use_case import CreateTherapistUseCase, UpdateTherapistUseCase, DeleteTherapistUseCase
-from ....infrastructure.repositories.django_therapist_repository import DjangoTherapistRepository
+from ...repositories.django_therapist_repository import DjangoTherapistRepository
 import logging
 
 audit_logger = logging.getLogger('audit_logger')

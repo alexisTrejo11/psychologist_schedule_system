@@ -1,10 +1,10 @@
 from django.db.models import Q
-from django.core.exceptions import ValidationError
 from ..models import TherapySession as DjangoTherapySession
 from ..domain.interfaces import ISessionRepository
 from ..domain.entities import TherapySession
 from typing import Optional, Dict, List
 from datetime import datetime
+from django.utils import timezone
 
 class DjangoSessionRepository(ISessionRepository):
     def get_by_id(self, session_id: int) -> Optional[TherapySession]:
@@ -13,6 +13,16 @@ class DjangoSessionRepository(ISessionRepository):
             return self._convert_to_entity(session)
         except DjangoTherapySession.DoesNotExist:
             return None
+        
+    def get_sessions_by_therapist(self, therapist, incoming=False):
+        if incoming is True:
+            return DjangoTherapySession.objects.filter(
+                therapist=therapist,
+                status='SCHEDULED',
+                start_time__gte=timezone.now()
+            )
+        
+        return DjangoTherapySession.objects.filter(therapist=therapist).order_by('start_time')
 
     def search(self, filters: Dict) -> List[TherapySession]:
         queryset = DjangoTherapySession.objects.all()

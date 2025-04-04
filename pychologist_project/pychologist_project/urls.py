@@ -8,7 +8,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.routers import DefaultRouter
 from therapy.views import TherapySessionViewSet
 from patients.views import PatientViewSet
-from therapists.core.infrastructure.adapters.views.views import TherapistViewSet
+from therapists.core.infrastructure.adapters.views.therpist_manager_views import TherapistViewSet
 from users.views.user_manager_views import UserViewSet
 from core.auditlog.views import AuditLogListView
 from payments.views import PaymentListCreateView, PaymentRetrieveUpdateDestroyView
