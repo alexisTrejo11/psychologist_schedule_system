@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles/patient_details.css">
+    <title>Sesiones</title>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="menu-toggle" id="menuToggle">
+            <i class="fas fa-bars"></i>
+        </div>
+        <div class="logo">
+            <i class="fas fa-brain"></i>
+            <a href="dashboard.html">Mind Care</a>  
+        </div>
+
+        <div class="user-menu">
+            <span id="userDisplayName">Terapeuta</span>
+            <img src="/api/placeholder/40/40" alt="Foto de perfil">
+        </div>
+    </header>
+
+    <!-- Side Bar Navigation -->
+    <nav class="sidebar" id="sidebar">
+        <ul>
+          <li><a href="#" class="active" data-page="sesiones"><i class="fas fa-calendar-alt"></i> Sesiones</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main>
+        <div class="page-content" id="sesiones">
+            <div class="content-header">
+              <h1>Historial de Sesiones</h1>
+            </div>
+            
+            <div class="card">
+              <div class="card-header">
+                <h2>Próximas Sesiones</h2>
+              </div>
+              
+              <table class="session-table">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Paciente</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>2023-10-01</td>
+                    <td>10:00 AM</td>
+                    <td>María López</td>
+                  </tr>
+                  <tr>
+                    <td>2023-10-05</td>
+                    <td>03:00 PM</td>
+                    <td>Juan Pérez</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="card">
+              <div class="card-header">
+                <h2>Sesiones Completadas</h2>
+              </div>
+              
+              <table class="session-table">
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Paciente</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>2023-09-15</td>
+                    <td>11:00 AM</td>
+                    <td>María López</td>
+                  </tr>
+                  <tr>
+                    <td>2023-09-22</td>
+                    <td>02:00 PM</td>
+                    <td>Juan Pérez</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+  </main>
+  <!-- Footer -->
+  <footer>
+    &copy; 2025 Mind Care. Todos los derechos reservados.
+  </footer>
+</body>
+</html>

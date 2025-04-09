@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         console.log("Respuesta de la API:", response);
         
+        // DATA
         if (response.ok) {
             const data = await response.json();
             console.log("Inicio de sesión exitoso:", data);

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="./styles/home_styless.css">
+  <title>Document</title>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="menu-toggle" id="menuToggle">
+      <i class="fas fa-bars"></i>
+    </div>
+    <div class="logo">
+      <i class="fas fa-brain"></i>
+      Mind Care 
+    </div>
+
+    <div class="user-menu" id="userMenu">
+      <span id="userDisplayName">Karen</span>
+      <img src="./img/fcfb97ed81a0c03ce4bfdfeb82870d7f.jpg" alt="Foto de perfil" id="userMenuToggle">
+
+      <div class="user-dropdown hidden" id="userDropdown">
+        <a href="./profile.html" id="goToProfile"><i class="fas fa-user"></i> Perfil</a>
+        <a href="./registry.html" id="logout"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Side Bar Navigation -->
+  <nav class="sidebar" id="sidebar">
+    <ul>
+      <li><a href="#" class="active" data-page="dashboard"><i class="fas fa-home"></i>Inicio</a></li>
+      <li><a href="#" data-page="sessions"><i class="fas fa-calendar-alt"></i>Sesiones</a></li>
+      <li><a href="#" data-page="patients"><i class="fas fa-users"></i>Pacientes</a></li>
+      <li><a href="#" data-page="payments"><i class="fas fa-credit-card"></i>Pagos</a></li>
+    </ul>
+  </nav>
+
+  <!-- Main Content Area -->
+  <main id="mainContent">
+    <!-- Dashboard -->
+    <div class="page-content" id="dashboard">
+      <div class="content-header">
+        <h1>Panel Principal</h1>
+      </div>
+    </div>
+
+    <!-- Resumen -->
+    <div class="card">
+      <div class="card-header">
+        <h2>Resumen</h2>           
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <div style="background-color: var(--primary-color); color: white; padding: 1rem; border-radius: 5px; text-align: center;">
+          <i class="fas fa-calendar-check" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+          <h3>Sesiones Hoy</h3>
+          <p style="font-size: 2rem; font-weight: bold;">3</p>
+        </div>
+        <div style="background-color: var(--secondary-color); color: white; padding: 1rem; border-radius: 5px; text-align: center;">
+          <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+          <h3>Pacientes Activos</h3>
+          <p style="font-size: 2rem; font-weight: bold;">12</p>
+        </div>
+        <div style="background-color: var(--accent-color); color: white; padding: 1rem; border-radius: 5px; text-align: center;">
+          <i class="fas fa-money-bill-wave" style="font-size: 2rem; margin-bottom: 0.5rem;"></i>
+          <h3>Pagos Pendientes</h3>
+          <p style="font-size: 2rem; font-weight: bold;">2</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gestión de Sesiones -->
+    <div class="page-content hidden" id="sessions">
+      <div class="content-header">
+        <h1>Gestión de Sesiones</h1>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2>Sesiones Programadas</h2>
+          <button id="newSessionBtn"><i class="fas fa-plus"></i> Nueva Sesión</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Hora</th>
+              <th>Paciente</th>
+              <th>Tipo</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>01/04/2025</td>
+              <td>09:00 - 10:00</td>
+              <td>María González</td>
+              <td>Terapia Individual</td>
+              <td><span style="color: var(--success-color);">Confirmada</span></td>
+              <td>
+                <button class="btn secondary" style="padding: 0.3rem 0.6rem;"><i class="fas fa-edit"></i></button>
+                <button class="btn secondary" style="padding: 0.3rem 0.6rem;"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+            <!-- Más filas según sea necesario -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Gestión de Pagos -->
+    <div class="page-content hidden" id="payments">
+      <div class="content-header">
+        <h1>Gestión de Pagos</h1>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2>Registro de Pagos</h2>
+          <button id="newPaymentBtn"><i class="fas fa-plus"></i> Nuevo Pago</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Paciente</th>
+              <th>Concepto</th>
+              <th>Monto</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>28/03/2025</td>
+              <td>María González</td>
+              <td>Sesión #12</td>
+              <td>€70.00</td>
+              <td><span style="color: var(--success-color);">Pagado</span></td>
+              <td>
+                <button class="btn secondary" style="padding: 0.3rem 0.6rem;"><i class="fas fa-edit"></i></button>
+                <button class="btn secondary" style="padding: 0.3rem 0.6rem;"><i class="fas fa-trash"></i></button>
+              </td>
+            </tr>
+            <!-- Más filas según sea necesario -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CRUD de Pacientes -->
+    <div class="page-content hidden" id="patients">
+      <div class="content-header">
+        <h1>Lista de Pacientes</h1>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h2>Pacientes en Terapia</h2>
+        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Edad</th>
+              <th>Teléfono</th>
+              <th>Correo</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Laura Ramírez</td>
+              <td>29</td>
+              <td>+34 600 123 456</td>
+              <td>laura.ramirez@mail.com</td>
+              <td>
+                <a href="./expediente.html" class="btn">Expediente</a>
+                <a href="./patient_session.html" class="btn">Sesiones</a>
+                <a href="./patient_payment.html" class="btn">Pagos</a>
+              </td>
+            </tr>
+            <tr>
+              <td>Carlos Gómez</td>
+              <td>42</td>
+              <td>+34 611 987 654</td>
+              <td>carlos.gomez@mail.com</td>
+              <td>
+                <a href="#" class="btn">Expediente</a>
+                <a href="#" class="btn">Sesiones</a>
+                <a href="#" class="btn">Pagos</a>
+              </td>
+            </tr>
+            <!-- Repetir más filas -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    &copy; 2025 Mind Care. Todos los derechos reservados.
+  </footer>
+  <script src="./js/home.js"></script>
+</body>
+</html>
