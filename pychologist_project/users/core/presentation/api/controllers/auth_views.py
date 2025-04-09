@@ -40,12 +40,12 @@ class SignupView(APIView):
             from .....core.data.service.token_service import TokenService
             from .....core.domain.usecase.auth_use_case import SignupUseCase
             from therapists.services import TherapistService
-            from patients.services import PatientService
+            from patients.core.infrastructure.repositories.django_patient_repository import DjangoPatientRepository
 
             user_repository = DjangoUserRepository()
             token_service = TokenService()
             therapist_repository = TherapistService()
-            patient_repository = PatientService()
+            patient_repository = DjangoPatientRepository()
             signup_use_case = SignupUseCase(
                 user_repository=user_repository,
                 therapist_repository=therapist_repository,

@@ -133,6 +133,12 @@ class DjangoPatientRepository(PatientRepository):
         patient.activate()
         self.update(patient)
 
+        
+    def get_deleted(self) -> List[PatientEntity]:
+        patients_deleted = PatientModel.objects.filter(deleted_at__isnull=False)
+        return [self._to_entity(patient) for patient in patients_deleted]
+
+
     def _to_entity(self, model: PatientModel) -> PatientEntity:
         """Converts a Django model to a domain entity."""
         return PatientEntity(

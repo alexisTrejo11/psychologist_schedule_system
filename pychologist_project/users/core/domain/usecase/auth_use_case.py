@@ -1,4 +1,5 @@
 from ....core.domain.entities import UserEntity
+from core.exceptions.custom_exceptions import BusinessLogicError
 
 class SignupUseCase:
     def __init__(self, user_repository, therapist_repository, patient_repository, token_service):
@@ -9,10 +10,10 @@ class SignupUseCase:
     
     def execute(self, data):
         if self.user_repository.exists_by_email(data.get('email')):
-            raise ValueError("El email ya está registrado")
+            raise BusinessLogicError("El email ya está registrado")
         
         if 'phone' in data and self.user_repository.exists_by_phone(data.get('phone')):
-            raise ValueError("El teléfono ya está registrado")
+            raise BusinessLogicError("El teléfono ya está registrado")
         
         self._validate_password(data.get('password'))
         
@@ -29,9 +30,9 @@ class SignupUseCase:
         elif user_role == 'patient':
             # TODO: link user to therapist
             user = self._create_user(data, 'ADMIN')
-            self.patient_repository.create_patient(data)
+            self.patient_repository.create(data)
         else:
-            raise ValueError("Invalid User Role")
+            raise BusinessLogicError("Invalid User Role")
         
         return self.token_service.create_tokens(user)
     
@@ -45,7 +46,7 @@ class SignupUseCase:
         import re
         password_regex = r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$"
         if not re.match(password_regex, password):
-            raise ValueError(
+            raise BusinessLogicError(
                 "La contraseña debe tener al menos 8 caracteres, incluir al menos una letra y un número."
             )
 
@@ -60,15 +61,14 @@ class LoginUseCase:
         password = data.get('password')
         
         if not email or not password:
-            raise ValueError("Se requieren email y contraseña.")
+            raise BusinessLogicError("Se requieren email y contraseña.")
         
         user = self.auth_service.authenticate(email, password)
-        
         if not user:
-            raise ValueError("Credenciales inválidas.")
+            raise BusinessLogicError("Credenciales inválidas.")
         
         if not user.is_active:
-            raise ValueError("El usuario está inactivo.")
+            raise BusinessLogicError("El usuario está inactivo.")
         
         # Actualizar último login
         self.user_repository.update_last_login(user)
@@ -84,7 +84,7 @@ class LogoutUseCase:
         try:
             self.token_service.invalidate_token(refresh_token)
         except Exception as e:
-            raise ValueError(f"Error al cerrar sesión: {str(e)}")
+            raise BusinessLogicError(f"Error al cerrar sesión: {str(e)}")
 
 class RefreshTokenUseCase:
     def __init__(self, token_service, user_repository):
@@ -95,4 +95,4 @@ class RefreshTokenUseCase:
         try:
             return self.token_service.refresh_token(refresh_token, self.user_repository)
         except Exception as e:
-            raise ValueError(f"Error al refrescar la sesión: {str(e)}")
+            raise BusinessLogicError(f"Error al refrescar la sesión: {str(e)}")

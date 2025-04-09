@@ -3,7 +3,6 @@ from datetime import datetime
 from ..domain.entities.patient_entitiy import Patient
 from ..domain.repository.patient_repository import PatientRepository
 
-
 class CreatePatientUseCase:
     """Caso de uso para crear un nuevo paciente."""
     

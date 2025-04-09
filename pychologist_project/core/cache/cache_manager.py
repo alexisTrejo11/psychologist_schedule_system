@@ -8,7 +8,7 @@ class CacheManager:
 
     def get_cache_key(self, id: int) -> str:
         """Generates a unique key for the cache."""
-        return f"{self.CACHE_PREFIX}{id}"
+        return f"{self.cache_prefix}{id}"
 
     def get(self, key: str):
         """Retrieves a value from the cache."""
