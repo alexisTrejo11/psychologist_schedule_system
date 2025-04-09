@@ -3,8 +3,9 @@ from datetime import timedelta
 import environ
 import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent.parent  # Nota el parent extra
+# Base directory
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+print("BASE_DIR:", BASE_DIR)
 
 # Environment variables
 env = environ.Env()
@@ -13,7 +14,10 @@ environ.Env.read_env(BASE_DIR / '.env')
 # Security
 SECRET_KEY = env('SECRET_KEY')
 DEBUG = env.bool('DEBUG', default=False)
-ALLOWED_HOSTS = []
+
+# Allowed hosts
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
+print("ALLOWED_HOSTS:", ALLOWED_HOSTS)
 
 # Application definition
 INSTALLED_APPS = [
@@ -24,16 +28,15 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    # Third-party apps
     'corsheaders',
-    
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
-
     'django_crontab',
-
     'drf_spectacular',
 
+    # Local apps
     'users',
     'therapy',
     'therapists',
@@ -43,7 +46,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware', 
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -74,7 +77,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'pychologist_project.wsgi.application'
 
-# Database (SQLite por defecto, será reemplazado en otros entornos)
+# Database
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',

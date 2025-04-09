@@ -1,6 +1,6 @@
 from ...models import Therapist
 from core.exceptions.custom_exceptions import EntityNotFoundError
-from therapy.infrastructure.repositories import DjangoSessionRepository
+from therapy.infrastructure.django_session_repository import DjangoSessionRepository
 
 class GetTherapistIncomingSessionsUseCase:
     def __init__(self, sesion_repository):

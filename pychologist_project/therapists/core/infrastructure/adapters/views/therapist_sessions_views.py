@@ -12,7 +12,7 @@ from ....application.therapist_session_case import (
     CreateTherapistSessionUseCase,
     UpdateTherapistSessionUseCase,
 )
-from therapy.infrastructure.repositories import DjangoSessionRepository
+from therapy.infrastructure.django_session_repository import DjangoSessionRepository
 from therapy.application.service import SessionService
 
 class TherapistSession(APIView):

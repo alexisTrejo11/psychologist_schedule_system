@@ -1,12 +1,14 @@
 from django.core.cache import cache
 
 class CacheManager:
-    CACHE_PREFIX = "therapy_session_"
+    def __init__(self, cache_prefix):
+        self.cache_prefix = cache_prefix
+
     CACHE_TIMEOUT = 60 * 15  # 15 mins
 
-    def get_cache_key(self, session_id: int) -> str:
+    def get_cache_key(self, id: int) -> str:
         """Generates a unique key for the cache."""
-        return f"{self.CACHE_PREFIX}{session_id}"
+        return f"{self.CACHE_PREFIX}{id}"
 
     def get(self, key: str):
         """Retrieves a value from the cache."""

@@ -6,7 +6,7 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 from .application.service import SessionService
 from .models import TherapySession
 from .serializers import TherapySessionSerializer
-from .infrastructure.repositories import DjangoSessionRepository as sessionRepository
+from .infrastructure.django_session_repository import DjangoSessionRepository as sessionRepository
 from core.api_response.response import ApiResponse
 import logging
 from core.swagger.schemas import TherapySessionResponseSchema
