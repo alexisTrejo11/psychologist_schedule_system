@@ -4,7 +4,7 @@ from users.models import User
 from .....models import Patient
 
 class PatientSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
+    user = UserSerializer(required=False, allow_null=True)
 
     class Meta:
         model = Patient
@@ -18,8 +18,4 @@ class PatientSerializer(serializers.ModelSerializer):
             'last_therapy': {'help_text': "Date and time of the patient's last therapy session (ISO 8601 format)."},
         }
 
-    def create(self, validated_data):
-        user_data = validated_data.pop('user')
-        user = User.objects.create_user(**user_data, role='PATIENT')
-        return Patient.objects.create(user=user, **validated_data)
 

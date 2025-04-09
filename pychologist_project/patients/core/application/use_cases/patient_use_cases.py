@@ -14,7 +14,6 @@ class CreatePatientUseCase:
             id=None,
             name=data.get('name', ''),
             description=data.get('description', ''),
-            user_id=data.get('user_id'),
             is_active=True,
             created_at=datetime.now(),
             updated_at=datetime.now()
@@ -24,7 +23,6 @@ class CreatePatientUseCase:
 
 class UpdatePatientUseCase:
     """Caso de uso para actualizar un paciente existente."""
-    
     def __init__(self, patient_repository: PatientRepository):
         self.patient_repository = patient_repository
     
