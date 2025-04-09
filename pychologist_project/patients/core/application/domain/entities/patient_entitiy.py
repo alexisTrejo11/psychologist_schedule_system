@@ -5,9 +5,9 @@ from typing import Optional
 @dataclass
 class Patient:
     """Entidad de dominio para representar un paciente."""
-    id: Optional[int]
     name: str
-    description: str
+    description: str = ''
+    id: Optional[int] = None
     first_therapy: Optional[datetime] = None
     last_therapy: Optional[datetime] = None
     is_active: bool = True

@@ -5,6 +5,7 @@ from django.db import IntegrityError
 from django.contrib.auth import get_user_model
 from ..core.application.domain.entities.patient_entitiy import Patient as PatientEntity
 from ..core.infrastructure.repositories.django_patient_repository import DjangoPatientRepository
+from ..models import Patient
 
 @pytest.fixture
 def create_user():
@@ -58,7 +59,7 @@ def test_get_by_id_existing(create_user, repository):
 
 @pytest.mark.django_db
 def test_get_by_id_not_found(repository):
-    with pytest.raises(ValueError, match="Paciente no encontrado"):
+    with pytest.raises(ValueError, match="Patient with ID 999 not found."):
         repository.get_by_id(999)
 
 @pytest.mark.django_db
@@ -124,7 +125,7 @@ def test_delete(create_user, repository):
     with pytest.raises(ValueError):
         repository.get_by_id(created.id)
     
-    model = repository.get_by_id(created.id)
+    model = Patient.objects.get(id=created.id)
     assert model.deleted_at is not None
 
 @pytest.mark.django_db
@@ -141,3 +142,5 @@ def test_deactivate_activate(create_user, repository):
     repository.activate(created.id)
     activated = repository.get_by_id(created.id)
     assert activated.is_active
+
+

@@ -116,11 +116,16 @@ class DjangoPatientRepository(PatientRepository):
         return entity
 
     def delete(self, patient_id: int) -> None:
+        print(f"Patient ID after get_by_id: {patient_id}")  # Debug statement
         patient = self.get_by_id(patient_id)
+        print(f"Patient ID after get_by_id: {patient.id}")  # Debug statement
+
         patient.set_as_deleted()
         self.update(patient)
 
         cache_key = self.cache_manager.get_cache_key(patient_id)
+
+
         self.cache_manager.delete(cache_key)
 
     def deactivate(self, patient_id: int) -> None:
