@@ -17,7 +17,6 @@ DEBUG = env.bool('DEBUG', default=False)
 
 # Allowed hosts
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
-print("ALLOWED_HOSTS:", ALLOWED_HOSTS)
 
 # Application definition
 INSTALLED_APPS = [
@@ -76,14 +75,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'pychologist_project.wsgi.application'
-
-# Database
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

@@ -1,6 +1,9 @@
 Django==5.1.2
-djangorestframework
+gunicorn==20.1.0
 psycopg2-binary
+django-phonenumber-field
+phonenumbers
+djangorestframework
 python-dateutil
 pytest
 pytest-django
@@ -11,7 +14,7 @@ pymemcache
 djangorestframework-simplejwt
 django-ratelimit
 drf-spectacular
-phonenumbers
+drf-yasg
 django-environ
 django-crontab 
 twilio

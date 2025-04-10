@@ -1,5 +1,5 @@
 from ....core.domain.entities import UserEntity
-from core.exceptions.custom_exceptions import BusinessLogicError
+from core.exceptions.custom_exceptions import BusinessLogicError, InvalidOperationError
 
 class SignupUseCase:
     def __init__(self, user_repository, therapist_repository, patient_repository, token_service):
@@ -21,7 +21,7 @@ class SignupUseCase:
         user = None
         
         if user_role == 'admin':
-            self._create_user(data, 'ADMIN')
+            user = self._create_user(data, 'ADMIN')
         elif user_role == 'therapist':
             user = self._create_user(data, 'ADMIN')
             # TODO: link user to therapist
@@ -30,9 +30,12 @@ class SignupUseCase:
         elif user_role == 'patient':
             # TODO: link user to therapist
             user = self._create_user(data, 'ADMIN')
-            self.patient_repository.create(data)
+            self.patient_repository.create(user)
         else:
             raise BusinessLogicError("Invalid User Role")
+        
+        if not user:
+            raise InvalidOperationError("Can't Create User")
         
         return self.token_service.create_tokens(user)
     
