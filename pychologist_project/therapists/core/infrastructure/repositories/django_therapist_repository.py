@@ -15,7 +15,6 @@ class DjangoTherapistRepository(TherapistRepository):
     This repository handles CRUD operations for therapists and integrates caching 
     to optimize performance.
     """
-
     def __init__(self):
         """
         Initializes the repository with a CacheManager instance.
@@ -54,34 +53,6 @@ class DjangoTherapistRepository(TherapistRepository):
             return therapist_entity
         except Therapist.DoesNotExist:
             raise EntityNotFoundError("Therapist", user_id)
-
-    def create(self, therapist_data: dict) -> TherapistEntity:
-        """
-        Creates a new therapist in the database and caches the result.
-
-        Args:
-            therapist_data (dict): A dictionary containing therapist data:
-                - user_id (int): The ID of the associated user.
-                - name (str): The therapist's name.
-                - license_number (str): The therapist's license number.
-                - specialization (str): The therapist's specialization.
-
-        Returns:
-            TherapistEntity: The newly created therapist entity.
-        """
-        therapist_model = Therapist.objects.create(
-            user_id=therapist_data.get('user_id'),
-            name=therapist_data.get('name', ''),
-            license_number=therapist_data.get('license_number'),
-            specialization=therapist_data.get('specialization')
-        )
-
-        therapist_entity = self._map_to_entity(therapist_model)
-
-        cache_key = self.cache_manager.get_cache_key(therapist_entity.id)
-        self.cache_manager.set(cache_key, therapist_entity)
-
-        return therapist_entity
 
     def get_unique_patient_count(self, therapist_id: int) -> int:
         """
@@ -131,6 +102,34 @@ class DjangoTherapistRepository(TherapistRepository):
         self.cache_manager.set(cache_key, count)
         return count
 
+    def create(self, therapist_data: dict) -> TherapistEntity:
+        """
+        Creates a new therapist in the database and caches the result.
+
+        Args:
+            therapist_data (dict): A dictionary containing therapist data:
+                - user_id (int): The ID of the associated user.
+                - name (str): The therapist's name.
+                - license_number (str): The therapist's license number.
+                - specialization (str): The therapist's specialization.
+
+        Returns:
+            TherapistEntity: The newly created therapist entity.
+        """
+        therapist_model = Therapist.objects.create(
+            user_id=therapist_data.get('user_id'),
+            name=therapist_data.get('name', ''),
+            license_number=therapist_data.get('license_number'),
+            specialization=therapist_data.get('specialization')
+        )
+
+        therapist_entity = self._map_to_entity(therapist_model)
+
+        cache_key = self.cache_manager.get_cache_key(therapist_entity.id)
+        self.cache_manager.set(cache_key, therapist_entity)
+
+        return therapist_entity
+
     def update(self, therapist_data: dict, therapist: Therapist) -> TherapistEntity:
         """
         Updates an existing therapist in the database and refreshes the cache.
@@ -175,9 +174,7 @@ class DjangoTherapistRepository(TherapistRepository):
 
             therapist = Therapist.objects.get(id=therapist_id)
 
-
             therapist.delete()
-
 
             cache_key = self.cache_manager.get_cache_key(therapist_id)
             self.cache_manager.delete(cache_key)

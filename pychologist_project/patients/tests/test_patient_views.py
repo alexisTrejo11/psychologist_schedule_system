@@ -1,243 +1,205 @@
-import pytest
+from django.test import TestCase
 from unittest.mock import MagicMock, patch
 from datetime import datetime
-from rest_framework.test import APIRequestFactory, force_authenticate
-from django.contrib.auth.models import User
-from rest_framework.test import APIClient
-from rest_framework.request import Request
+from rest_framework.test import APIRequestFactory, Request
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from ..core.infrastructure.api.views.views import PatientViewSet
 from ..core.application.domain.entities.patient_entitiy import Patient
 
-@pytest.fixture
-def sample_patient_data():
-    """Sample patient data for tests"""
-    return {
-        "id": 1,
-        "name": "John Doe",
-        "description": "Test patient",
-        "user_id": 1,
-        "first_therapy": None,
-        "last_therapy": None,
-        "is_active": True,
-        "created_at": datetime.now(),
-        "updated_at": datetime.now(),
-        "deleted_at": None,
-    }
+class PatientViewSetTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        """Set up data for all tests."""
+        cls.sample_patient_data = {
+            "id": 1,
+            "name": "John Doe",
+            "description": "Test patient",
+            "user_id": 1,
+            "first_therapy": None,
+            "last_therapy": None,
+            "is_active": True,
+            "created_at": datetime.now(),
+            "updated_at": datetime.now(),
+            "deleted_at": None,
+        }
 
-@pytest.fixture
-def api_request_factory():
-    """API request factory for tests"""
-    return APIRequestFactory()
+        cls.patient_entity = Patient(**cls.sample_patient_data)
+        cls.mock_patient_repository = MagicMock()
 
-@pytest.fixture
-def patient_entity(sample_patient_data):
-    """Patient domain entity instance"""
-    return Patient(**sample_patient_data)
+        # Create a PatientViewSet with mock repository
+        cls.patient_viewset = PatientViewSet()
+        cls.patient_viewset.create_patient_use_case = MagicMock()
+        cls.patient_viewset.update_patient_use_case = MagicMock()
+        cls.patient_viewset.get_patient_use_case = MagicMock()
+        cls.patient_viewset.search_patients_use_case = MagicMock()
+        cls.patient_viewset.delete_patient_use_case = MagicMock()
+        cls.patient_viewset.deactivate_patient_use_case = MagicMock()
+        cls.patient_viewset.activate_patient_use_case = MagicMock()
+        cls.patient_viewset.get_deleted_patients_use_case = MagicMock()
 
-@pytest.fixture
-def mock_patient_repository():
-    """Create a mock patient repository"""
-    return MagicMock()
+        cls.api_request_factory = APIRequestFactory()
 
-@pytest.fixture
-def patient_viewset(mock_patient_repository):
-    """Create a PatientViewSet with mock repository"""
-    viewset = PatientViewSet()
-    
-    # Mock the use cases with the repository
-    viewset.create_patient_use_case = MagicMock()
-    viewset.update_patient_use_case = MagicMock()
-    viewset.get_patient_use_case = MagicMock()
-    viewset.search_patients_use_case = MagicMock()
-    viewset.delete_patient_use_case = MagicMock()
-    viewset.deactivate_patient_use_case = MagicMock()
-    viewset.activate_patient_use_case = MagicMock()
-    viewset.get_deleted_patients_use_case = MagicMock()
-    
-    return viewset
+    def test_create_endpoint(self):
+        """
+        Test the create endpoint of the PatientViewSet.
+        Ensures that the request is processed correctly and returns a 201 response.
+        """
+        # Arrange
+        data = {
+            "name": self.sample_patient_data["name"],
+            "description": self.sample_patient_data["description"],
+            "user_id": self.sample_patient_data["user_id"],
+        }
+        request = self.api_request_factory.post("/patients/", data=data, format="json")
+        drf_request = Request(request, parsers=[JSONParser()])
+        self.patient_viewset.format_kwarg = None
 
-def test_create_endpoint(api_request_factory, sample_patient_data, patient_entity, patient_viewset):
-    # Arrange
-    data = {
-        "name": sample_patient_data["name"],
-        "description": sample_patient_data["description"],
-        "user_id": sample_patient_data["user_id"],
-    }
-    
-    # Create a properly formatted request
-    request = api_request_factory.post("/patients/", data=data, format="json")
-    
-    # Set up the view with proper DRF context
-    patient_viewset.format_kwarg = None
-    
-    # Important: Parse the request body and add it as request.data
-    drf_request = Request(request, parsers=[JSONParser()])
-    
-    # Mock the serializer validation and creation
-    with patch('rest_framework.serializers.Serializer.is_valid', return_value=True):
-        with patch('rest_framework.serializers.Serializer.validated_data', new_callable=MagicMock, return_value=data):
-            with patch('rest_framework.serializers.Serializer.data', new_callable=MagicMock, return_value=sample_patient_data):
-                # Mock the use case to return our patient entity
-                patient_viewset.create_patient_use_case.execute.return_value = patient_entity
-                
-                # Call the method directly with our prepared request
-                response = patient_viewset.create(drf_request)
-    
-    # Assert
-    assert response.status_code == 201
-    assert response.data == sample_patient_data
-    patient_viewset.create_patient_use_case.execute.assert_called_once()
+        with patch('rest_framework.serializers.Serializer.is_valid', return_value=True):
+            with patch('rest_framework.serializers.Serializer.validated_data', new_callable=MagicMock, return_value=data):
+                with patch('rest_framework.serializers.Serializer.data', new_callable=MagicMock, return_value=self.sample_patient_data):
+                    self.patient_viewset.create_patient_use_case.execute.return_value = self.patient_entity
+                    response = self.patient_viewset.create(drf_request)
 
-def test_update_endpoint(api_request_factory, sample_patient_data, patient_entity, patient_viewset):
-    # Arrange
-    pk = 1
-    data = {
-        "name": "Updated Name",
-        "description": "Updated description",
-    }
-    updated_patient_data = {**sample_patient_data, "name": "Updated Name", "description": "Updated description"}
-    updated_patient = Patient(**updated_patient_data)
+        # Assert
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data, self.sample_patient_data)
+        self.patient_viewset.create_patient_use_case.execute.assert_called_once()
 
-    # Create a properly formatted request
-    request = api_request_factory.put(f"/patients/{pk}/", data=data, format="json")
+    def test_update_endpoint(self):
+        """
+        Test the update endpoint of the PatientViewSet.
+        Ensures that the request is processed correctly and returns a 200 response.
+        """
+        # Arrange
+        pk = 1
+        data = {
+            "name": "Updated Name",
+            "description": "Updated description",
+        }
+        updated_patient_data = {**self.sample_patient_data, "name": "Updated Name", "description": "Updated description"}
+        updated_patient = Patient(**updated_patient_data)
+        request = self.api_request_factory.put(f"/patients/{pk}/", data=data, format="json")
+        drf_request = Request(request, parsers=[JSONParser()])
+        self.patient_viewset.format_kwarg = None
 
-    # Set up the view with proper DRF context
-    patient_viewset.format_kwarg = None
+        with patch('rest_framework.serializers.Serializer.is_valid', return_value=True):
+            with patch('rest_framework.serializers.Serializer.validated_data', new_callable=lambda: data):
+                with patch('rest_framework.serializers.Serializer.data', new_callable=lambda: updated_patient_data):
+                    self.patient_viewset.update_patient_use_case.execute.return_value = updated_patient
+                    response = self.patient_viewset.update(drf_request, pk=pk)
 
-    # Important: Parse the request body and add it as request.data
-    drf_request = Request(request, parsers=[JSONParser()])
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, updated_patient_data)
+        self.patient_viewset.update_patient_use_case.execute.assert_called_once_with(pk, data)
 
-    # Mock the serializer validation and update
-    with patch('rest_framework.serializers.Serializer.is_valid', return_value=True):
-        with patch('rest_framework.serializers.Serializer.validated_data', new_callable=lambda: data):
-            with patch('rest_framework.serializers.Serializer.data', new_callable=lambda: updated_patient_data):
-                # Mock the use case to return our updated patient entity
-                patient_viewset.update_patient_use_case.execute.return_value = updated_patient
+    def test_retrieve_endpoint(self):
+        """
+        Test the retrieve endpoint of the PatientViewSet.
+        Ensures that the request is processed correctly and returns a 200 response.
+        """
+        # Arrange
+        pk = 1
+        request = self.api_request_factory.get(f"/patients/{pk}/")
+        drf_request = Request(request)
+        self.patient_viewset.format_kwarg = None
 
-                # Call the method directly with our prepared request
-                response = patient_viewset.update(drf_request, pk=pk)
+        with patch('rest_framework.serializers.Serializer.data', new_callable=MagicMock, return_value=self.sample_patient_data):
+            self.patient_viewset.get_patient_use_case.execute.return_value = self.patient_entity
+            response = self.patient_viewset.retrieve(drf_request, pk=pk)
 
-    # Assert
-    assert response.status_code == 200
-    assert response.data == updated_patient_data
-    patient_viewset.update_patient_use_case.execute.assert_called_once_with(pk, data)
- 
-def test_retrieve_endpoint(api_request_factory, sample_patient_data, patient_entity, patient_viewset):
-    # Arrange
-    pk = 1
-    request = api_request_factory.get(f"/patients/{pk}/")
-    
-    # Set up the view with proper DRF context
-    patient_viewset.format_kwarg = None
-    
-    # Create proper DRF request
-    drf_request = Request(request)
-    
-    # Mock the serializer response
-    with patch('rest_framework.serializers.Serializer.data', new_callable=MagicMock, return_value=sample_patient_data):
-        # Mock the use case to return our patient entity
-        patient_viewset.get_patient_use_case.execute.return_value = patient_entity
-        
-        # Call the method directly with our prepared request
-        response = patient_viewset.retrieve(drf_request, pk=pk)
-    
-    # Assert
-    assert response.status_code == 200
-    assert response.data == sample_patient_data
-    patient_viewset.get_patient_use_case.execute.assert_called_once_with(pk)
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, self.sample_patient_data)
+        self.patient_viewset.get_patient_use_case.execute.assert_called_once_with(pk)
 
-def test_list_endpoint(api_request_factory, sample_patient_data, patient_entity, patient_viewset):
-    # Arrange
-    # Create a GET request with query parameters
-    request = api_request_factory.get("/patients/?name=John&is_active=True")
+    def test_list_endpoint(self):
+        """
+        Test the list endpoint of the PatientViewSet.
+        Ensures that the request is processed correctly and returns a 200 response.
+        """
+        # Arrange
+        request = self.api_request_factory.get("/patients/?name=John&is_active=True")
+        drf_request = Request(request)
+        self.patient_viewset.format_kwarg = None
 
-    # Set up the view with proper DRF context
-    patient_viewset.format_kwarg = None
+        with patch('rest_framework.serializers.ListSerializer.data', new_callable=lambda: [self.sample_patient_data]):
+            self.patient_viewset.search_patients_use_case.execute.return_value = [self.patient_entity]
+            response = self.patient_viewset.list(drf_request)
 
-    # Create a proper DRF request (query_params will be parsed automatically)
-    drf_request = Request(request)
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0], self.sample_patient_data)
 
-    # Mock the serializer response for a list
-    with patch('rest_framework.serializers.ListSerializer.data', new_callable=lambda: [sample_patient_data]):
-        # Mock the use case to return a list containing our patient entity
-        patient_viewset.search_patients_use_case.execute.return_value = [patient_entity]
+    def test_delete_action(self):
+        """
+        Test the delete action of the PatientViewSet.
+        Ensures that the request is processed correctly and returns a 204 response.
+        """
+        # Arrange
+        pk = 1
+        request = self.api_request_factory.post(f"/patients/{pk}/delete/")
+        drf_request = Request(request)
+        self.patient_viewset.format_kwarg = None
 
-        # Call the method directly with our prepared request
-        response = patient_viewset.list(drf_request)
+        response = self.patient_viewset.delete(drf_request, pk=pk)
 
-    # Assert
-    assert response.status_code == 200
-    assert len(response.data) == 1
-    assert response.data[0] == sample_patient_data
+        # Assert
+        self.assertEqual(response.status_code, 204)
+        self.patient_viewset.delete_patient_use_case.execute.assert_called_once_with(pk)
 
+    def test_deactivate_action(self):
+        """
+        Test the deactivate action of the PatientViewSet.
+        Ensures that the request is processed correctly and returns a 204 response.
+        """
+        # Arrange
+        pk = 1
+        request = self.api_request_factory.post(f"/patients/{pk}/deactivate/")
+        drf_request = Request(request)
+        self.patient_viewset.format_kwarg = None
 
-def test_delete_action(api_request_factory, patient_viewset):
-    # Arrange
-    pk = 1
-    request = api_request_factory.post(f"/patients/{pk}/delete/")
-    
-    # Create proper DRF request
-    drf_request = Request(request)
-    
-    # Call the method directly
-    response = patient_viewset.delete(drf_request, pk=pk)
-    
-    # Assert
-    assert response.status_code == 204
-    patient_viewset.delete_patient_use_case.execute.assert_called_once_with(pk)
+        response = self.patient_viewset.deactivate(drf_request, pk=pk)
 
-def test_deactivate_action(api_request_factory, patient_viewset):
-    # Arrange
-    pk = 1
-    request = api_request_factory.post(f"/patients/{pk}/deactivate/")
-    
-    # Create proper DRF request
-    drf_request = Request(request)
-    
-    # Call the method directly
-    response = patient_viewset.deactivate(drf_request, pk=pk)
-    
-    # Assert
-    assert response.status_code == 204
-    patient_viewset.deactivate_patient_use_case.execute.assert_called_once_with(pk)
+        # Assert
+        self.assertEqual(response.status_code, 204)
+        self.patient_viewset.deactivate_patient_use_case.execute.assert_called_once_with(pk)
 
-def test_activate_action(api_request_factory, patient_viewset):
-    # Arrange
-    pk = 1
-    request = api_request_factory.post(f"/patients/{pk}/activate/")
-    
-    # Create proper DRF request
-    drf_request = Request(request)
-    
-    # Call the method directly
-    response = patient_viewset.activate(drf_request, pk=pk)
-    
-    # Assert
-    assert response.status_code == 204
-    patient_viewset.activate_patient_use_case.execute.assert_called_once_with(pk)
+    def test_activate_action(self):
+        """
+        Test the activate action of the PatientViewSet.
+        Ensures that the request is processed correctly and returns a 204 response.
+        """
+        # Arrange
+        pk = 1
+        request = self.api_request_factory.post(f"/patients/{pk}/activate/")
+        drf_request = Request(request)
+        self.patient_viewset.format_kwarg = None
 
-def test_deleted_action(api_request_factory, sample_patient_data, patient_entity, patient_viewset):
-    # Arrange
-    request = api_request_factory.get("/patients/deleted/")
-    
-    # Set up the view with proper DRF context
-    patient_viewset.format_kwarg = None
-    
-    # Create proper DRF request
-    drf_request = Request(request)
-    
-    # Mock the serializer response for a list
-    with patch('rest_framework.serializers.ListSerializer.data', new_callable=MagicMock, return_value=[sample_patient_data]):
-        # Mock the use case to return a list containing our patient entity
-        patient_viewset.get_deleted_patients_use_case.execute.return_value = [patient_entity]
-        
-        # Call the method directly with our prepared request
-        response = patient_viewset.deleted(drf_request)
-    
-    # Assert
-    assert response.status_code == 200
-    assert len(response.data) == 1
-    assert response.data[0] == sample_patient_data
-    patient_viewset.get_deleted_patients_use_case.execute.assert_called_once()
+        response = self.patient_viewset.activate(drf_request, pk=pk)
+
+        # Assert
+        self.assertEqual(response.status_code, 204)
+        self.patient_viewset.activate_patient_use_case.execute.assert_called_once_with(pk)
+
+    def test_deleted_action(self):
+        """
+        Test the deleted action of the PatientViewSet.
+        Ensures that the request is processed correctly and returns a 200 response.
+        """
+        # Arrange
+        request = self.api_request_factory.get("/patients/deleted/")
+        drf_request = Request(request)
+        self.patient_viewset.format_kwarg = None
+
+        with patch('rest_framework.serializers.ListSerializer.data', new_callable=MagicMock, return_value=[self.sample_patient_data]):
+            self.patient_viewset.get_deleted_patients_use_case.execute.return_value = [self.patient_entity]
+            response = self.patient_viewset.deleted(drf_request)
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0], self.sample_patient_data)
+        self.patient_viewset.get_deleted_patients_use_case.execute.assert_called_once()
