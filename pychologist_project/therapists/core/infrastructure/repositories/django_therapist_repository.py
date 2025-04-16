@@ -22,6 +22,24 @@ class DjangoTherapistRepository(TherapistRepository):
         self.cache_manager = CacheManager(CACHE_PREFIX)
         super().__init__()
 
+
+    def get_by_id(self, therapist_id) -> TherapistEntity:
+        therapist_cache_key = self.cache_manager.get_cache_key(therapist_id)
+
+        therapist_cache = self.cache_manager.get(therapist_cache_key)
+        if therapist_cache:
+            return therapist_cache
+
+        try:
+            therapist = Therapist.objects.get(id=therapist_id)
+
+            self.cache_manager.set(therapist_cache_key, therapist)
+            
+            return self._map_to_entity(therapist)
+        except Therapist.DoesNotExist:
+            raise EntityNotFoundError('Therapist')
+
+
     def get_by_user_id(self, user_id: int) -> TherapistEntity:
         """
         Retrieves a therapist by their associated user ID.
@@ -102,63 +120,56 @@ class DjangoTherapistRepository(TherapistRepository):
         self.cache_manager.set(cache_key, count)
         return count
 
-    def create(self, therapist_data: dict) -> TherapistEntity:
+    def create(self, new_therapist: TherapistEntity) -> TherapistEntity:
         """
-        Creates a new therapist in the database and caches the result.
-
-        Args:
-            therapist_data (dict): A dictionary containing therapist data:
-                - user_id (int): The ID of the associated user.
-                - name (str): The therapist's name.
-                - license_number (str): The therapist's license number.
-                - specialization (str): The therapist's specialization.
-
-        Returns:
-            TherapistEntity: The newly created therapist entity.
+        Creates a new therapist in the database and updates the provided TherapistEntity with database-generated fields.
         """
         therapist_model = Therapist.objects.create(
-            user_id=therapist_data.get('user_id'),
-            name=therapist_data.get('name', ''),
-            license_number=therapist_data.get('license_number'),
-            specialization=therapist_data.get('specialization')
+            user_id= new_therapist.user_id,
+            name=new_therapist.name,
+            license_number=new_therapist.license_number,
+            specialization=new_therapist.specialization
         )
 
-        therapist_entity = self._map_to_entity(therapist_model)
+        new_therapist.id = therapist_model.id
+        new_therapist.created_at = therapist_model.created_at
+        new_therapist.updated_at = therapist_model.updated_at
 
-        cache_key = self.cache_manager.get_cache_key(therapist_entity.id)
-        self.cache_manager.set(cache_key, therapist_entity)
+        cache_key = self.cache_manager.get_cache_key(new_therapist.id)
+        try:
+            self.cache_manager.set(cache_key, new_therapist)
+        except Exception as e:
+            print(f"Cache set failed: {e}")
 
-        return therapist_entity
+        return new_therapist
 
-    def update(self, therapist_data: dict, therapist: Therapist) -> TherapistEntity:
+    def update(self, therapist_data: dict, existing_therapist: TherapistEntity) -> TherapistEntity:
         """
         Updates an existing therapist in the database and refreshes the cache.
-
-        Args:
-            therapist_data (dict): A dictionary containing updated therapist data:
-                - name (str, optional): The updated name.
-                - license_number (str, optional): The updated license number.
-                - specialization (str, optional): The updated specialization.
-            therapist (Therapist): The therapist model instance to update.
-
-        Returns:
-            TherapistEntity: The updated therapist entity.
         """
         if 'name' in therapist_data:
-            therapist.name = therapist_data['name']
+            existing_therapist.name = therapist_data['name']
         if 'license_number' in therapist_data:
-            therapist.license_number = therapist_data['license_number']
+            existing_therapist.license_number = therapist_data['license_number']
         if 'specialization' in therapist_data:
-            therapist.specialization = therapist_data['specialization']
+            existing_therapist.specialization = therapist_data['specialization']
 
-        therapist.save()
+        # Save the updated therapist to the database
+        therapist_model = self._get_by_id(existing_therapist.id)
+        therapist_model.name = existing_therapist.name
+        therapist_model.license_number = existing_therapist.license_number
+        therapist_model.specialization = existing_therapist.specialization
+        therapist_model.save()
 
-        therapist_entity = self._map_to_entity(therapist)
+        updated_entity = self._map_to_entity(therapist_model)
 
-        cache_key = self.cache_manager.get_cache_key(therapist_entity.id)
-        self.cache_manager.set(cache_key, therapist_entity)
+        cache_key = self.cache_manager.get_cache_key(updated_entity.id)
+        try:
+            self.cache_manager.set(cache_key, updated_entity)
+        except Exception as e:
+            print(f"Cache set failed: {e}")
 
-        return therapist_entity
+        return updated_entity
 
     def delete(self, therapist_id: int) -> None:
         """
@@ -170,16 +181,12 @@ class DjangoTherapistRepository(TherapistRepository):
         Raises:
             EntityNotFoundError: If no therapist is found with the given ID.
         """
-        try:
+        therapist = self._get_by_id(therapist_id)
 
-            therapist = Therapist.objects.get(id=therapist_id)
+        therapist.delete()
 
-            therapist.delete()
-
-            cache_key = self.cache_manager.get_cache_key(therapist_id)
-            self.cache_manager.delete(cache_key)
-        except Therapist.DoesNotExist:
-            raise EntityNotFoundError("Therapist", therapist_id)
+        cache_key = self.cache_manager.get_cache_key(therapist_id)
+        self.cache_manager.delete(cache_key)
 
     def _map_to_entity(self, model: Therapist) -> TherapistEntity:
         """
@@ -200,3 +207,9 @@ class DjangoTherapistRepository(TherapistRepository):
             created_at=model.created_at,
             updated_at=model.updated_at
         )
+    
+    def _get_by_id(self, therapist_id):
+        try:
+            return Therapist.objects.get(id=therapist_id)
+        except Therapist.DoesNotExist:
+            raise EntityNotFoundError("Therapist", therapist_id)

@@ -4,8 +4,16 @@ from django.utils import timezone
 from ..core.application.domain.entities.patient_entitiy import Patient as PatientEntity
 from ..core.infrastructure.repositories.django_patient_repository import DjangoPatientRepository
 from ..models import Patient
+from django.core.management import call_command
 
-class PatientRepositoryCacheTest(TestCase):
+class BaseTestCase(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        call_command('migrate')
+
+
+class PatientRepositoryCacheTest(BaseTestCase):
     @classmethod
     def setUpTestData(cls):
         """Set up data for all tests."""
@@ -153,7 +161,7 @@ class PatientRepositoryCacheTest(TestCase):
         # Simulate cache hit with a valid PatientEntity object
         self.mock_cache.get.return_value = patient_entity
         self.mock_cache.delete.return_value = None
-
+    
         # Act
         self.repository.delete(patient_model.id)
 

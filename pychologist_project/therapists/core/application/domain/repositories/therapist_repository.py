@@ -1,12 +1,17 @@
 from abc import ABC, abstractmethod
+from ....application.domain.entities.therapist import TherapistEntity
 
 class TherapistRepository(ABC):
+    @abstractmethod
+    def get_by_id(self, user_id):
+        pass
+
     @abstractmethod
     def get_by_user_id(self, user_id):
         pass
     
     @abstractmethod
-    def create(self, therapist_data):
+    def create(self, therapist):
         pass
     
     @abstractmethod
@@ -18,7 +23,7 @@ class TherapistRepository(ABC):
         pass
 
     @abstractmethod
-    def update(self, therapist_data, therapist_id):
+    def update(self, therapist):
         pass
 
     @abstractmethod

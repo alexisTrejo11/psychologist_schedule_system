@@ -12,13 +12,13 @@ class PatientRepositoryTest(TestCase):
         cls.User = get_user_model()
         cls.repository = DjangoPatientRepository()
 
-    def create_user(self, username):
+    def create_user(self, email):
         """Helper para crear usuarios únicos."""
-        return self.User.objects.create_user(username=username, password="password")
+        return self.User.objects.create_user(email=email, password="password")
 
     def test_create_patient(self):
         """Prueba la creación de un paciente."""
-        user = self.create_user("testuser_unique")
+        user = self.create_user("testuser_unique@test.com")
         patient_data = PatientEntity(
             name="John Doe",
             description="Test patient",
@@ -34,7 +34,7 @@ class PatientRepositoryTest(TestCase):
 
     def test_update_patient(self):
         """Prueba la actualización de un paciente."""
-        user = self.create_user("update_user_unique")
+        user = self.create_user("update_user_unique_2@test.com")
         patient = PatientEntity(name="Original", description="Original desc", user_id=user.id)
         created = self.repository.create(patient)
 
@@ -47,7 +47,7 @@ class PatientRepositoryTest(TestCase):
 
     def test_get_by_id_existing(self):
         """Prueba la obtención de un paciente existente por ID."""
-        user = self.create_user("get_by_id_user_unique")
+        user = self.create_user("get_by_id_user_unique@test.com")
         patient = PatientEntity(name="Test", user_id=user.id)
         created = self.repository.create(patient)
 
@@ -61,8 +61,8 @@ class PatientRepositoryTest(TestCase):
 
     def test_search_by_name(self):
         """Prueba la búsqueda de pacientes por nombre."""
-        user1 = self.create_user("user1_unique")
-        user2 = self.create_user("user2_unique")
+        user1 = self.create_user("user1_unique@test.com")
+        user2 = self.create_user("user2_unique@test.com")
 
         patient1 = PatientEntity(name="John Doe", user_id=user1.id)
         patient2 = PatientEntity(name="Jane Smith", user_id=user2.id)
@@ -75,8 +75,8 @@ class PatientRepositoryTest(TestCase):
 
     def test_search_by_is_active(self):
         """Prueba la búsqueda de pacientes por estado activo."""
-        user1 = self.create_user("user3_unique")
-        user2 = self.create_user("user4_unique")
+        user1 = self.create_user("user3_unique@test.com")
+        user2 = self.create_user("user4_unique@test.com")
 
         patient1 = PatientEntity(name="Active", is_active=True, user_id=user1.id)
         patient2 = PatientEntity(name="Inactive", is_active=False, user_id=user2.id)
@@ -89,8 +89,8 @@ class PatientRepositoryTest(TestCase):
 
     def test_search_term(self):
         """Prueba la búsqueda de pacientes por término."""
-        user1 = self.create_user("user7_unique")
-        user2 = self.create_user("user8_unique")
+        user1 = self.create_user("user7_unique@test.com")
+        user2 = self.create_user("user8_unique@test.com")
 
         patient1 = PatientEntity(name="John", description="Doe", user_id=user1.id)
         patient2 = PatientEntity(name="Jane", description="John", user_id=user2.id)
@@ -102,7 +102,7 @@ class PatientRepositoryTest(TestCase):
 
     def test_get_deleted(self):
         """Prueba la obtención de pacientes eliminados."""
-        user = self.create_user("delete_user_unique")
+        user = self.create_user("delete_user_unique@test.com")
         patient = PatientEntity(name="Delete Me", user_id=user.id)
         created = self.repository.create(patient)
         self.repository.delete(created.id)
@@ -113,7 +113,7 @@ class PatientRepositoryTest(TestCase):
 
     def test_delete(self):
         """Prueba la eliminación de un paciente."""
-        user = self.create_user("delete_test_user_unique")
+        user = self.create_user("delete_test_user_unique@test.com")
         patient = PatientEntity(name="Delete Me", user_id=user.id)
         created = self.repository.create(patient)
         self.repository.delete(created.id)
@@ -126,7 +126,7 @@ class PatientRepositoryTest(TestCase):
 
     def test_deactivate_activate(self):
         """Prueba la desactivación y activación de un paciente."""
-        user = self.create_user("deactivate_user_unique")
+        user = self.create_user("deactivate_user_unique@test.com")
 
         patient = PatientEntity(name="Toggle", is_active=True, user_id=user.id)
         created = self.repository.create(patient)

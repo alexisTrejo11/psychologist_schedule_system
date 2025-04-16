@@ -1,7 +1,5 @@
 from .base import *
 
-# Security
-DEBUG = False
 
 DATABASES = {
     'default': {
@@ -17,7 +15,6 @@ DATABASES = {
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-AUTH_USER_MODEL = 'users.User'
 
 # Email backend (SMTP en producción)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

@@ -11,12 +11,11 @@ print("BASE_DIR:", BASE_DIR)
 env = environ.Env()
 environ.Env.read_env(BASE_DIR / '.env')
 
+# Allowed hosts
+ALLOWED_HOSTS = []
 # Security
 SECRET_KEY = env('SECRET_KEY')
-DEBUG = env.bool('DEBUG', default=False)
-
-# Allowed hosts
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
+DEBUG = True
 
 # Application definition
 INSTALLED_APPS = [
@@ -137,6 +136,9 @@ LOGGING = {
         },
     },
 }
+
+AUTH_USER_MODEL = 'users.User'
+
 
 # Twilio
 TWILIO_ACCOUNT_SID = env('TWILIO_ACCOUNT_SID')
