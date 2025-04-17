@@ -1,4 +1,5 @@
 from django.core.cache import cache
+from typing import Dict, List, Any
 
 class CacheManager:
     def __init__(self, cache_prefix):
@@ -7,21 +8,22 @@ class CacheManager:
     CACHE_TIMEOUT = 60 * 15  # 15 mins
 
     def get_cache_key(self, id: int) -> str:
-        """Generates a unique key for the cache."""
         return f"{self.cache_prefix}{id}"
 
-    def get(self, key: str):
-        """Retrieves a value from the cache."""
+    def get(self, key: str) -> Any:
         return cache.get(key)
 
-    def set(self, key: str, value, timeout: int = None):
-        """Stores a value in the cache."""
+    def set(self, key: str, value: Any, timeout: int = None):
         cache.set(key, value, timeout or self.CACHE_TIMEOUT)
 
+    def set_multi(self, data: Dict[str, Any], timeout: int = None):
+        cache.set_many(data, timeout or self.CACHE_TIMEOUT)
+
     def delete(self, key: str):
-        """Deletes a value from the cache."""
         cache.delete(key)
 
+    def delete_multi(self, keys: List[str]):
+        cache.delete_many(keys)
+
     def generate_search_key(self, filters: dict) -> str:
-        """Generates a unique key for searches based on filters."""
         return f"search_{hash(frozenset(filters.items()))}"

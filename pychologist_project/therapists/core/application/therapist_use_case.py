@@ -1,10 +1,12 @@
 from core.exceptions.custom_exceptions import EntityNotFoundError
 from ...core.application.domain.entities.home_data import HomeDataEntity
 from ...core.application.domain.entities.therapist import TherapistEntity
+from ..application.domain.repositories.therapist_repository import TherapistRepository
 from ...models import Therapist
+from core.mappers.therapist.therapist_mappers import TherapistMapper
 
 class GetTherapistHomeDataUseCase:
-    def __init__(self, therapist_repository):
+    def __init__(self, therapist_repository : TherapistRepository):
         self.therapist_repository = therapist_repository
     
     def execute(self, user_id):
@@ -23,7 +25,7 @@ class GetTherapistHomeDataUseCase:
         )
     
 class CreateTherapistUseCase:
-    def __init__(self, therapist_repository):
+    def __init__(self, therapist_repository : TherapistRepository):
         self.therapist_repository = therapist_repository
     
     def execute(self, therapist_data) -> Therapist:
@@ -37,71 +39,37 @@ class CreateTherapistUseCase:
             license_number=therapist_data.get('license_number'),
         )
 
-        created_entity = self.therapist_repository.create(entity)
+        created_entity = self.therapist_repository.save(entity)
 
-
-        return Therapist(
-            id=user_id,
-            user_id=created_entity.user_id,
-            name=created_entity.name,
-            specialization=created_entity.specialization,
-            license_number=created_entity.license_number,
-            created_at=created_entity.created_at,
-            updated_at=created_entity.updated_at
-        )
+        return TherapistMapper.to_model(created_entity)
 
 
 class GetTherapistSessionsUseCase:
-    def __init__(self, therapist_repository):
+    def __init__(self, therapist_repository : TherapistRepository):
         self.therapist_repository = therapist_repository
     
-    def execute(self, id):
-        return self.therapist_repository.get_by_id(id)
-
-
-class GetTherapistSessionsUseCase:
-    def __init__(self, therapist_repository):
-        self.therapist_repository = therapist_repository
-    
-    def execute(self, id):
-        return self.therapist_repository.get_by_id(id)
+    def execute(self, id)  -> Therapist:
+        therapist_entity = self.therapist_repository.get_by_id(id)
+        return TherapistMapper.to_model(therapist_entity)
 
 
 class UpdateTherapistUseCase:
-    def __init__(self, therapist_repository):
+    def __init__(self, therapist_repository : TherapistRepository):
         self.therapist_repository = therapist_repository
 
-    def execute(self, therapist_object, validated_data):
-        """
-        Actualiza un terapeuta con los datos validados.
-        
-        Args:
-            therapist_object: Instancia del modelo Therapist a actualizar
-            validated_data: Diccionario con los datos validados para actualizar
-            
-        Returns:
-            Therapist: La instancia actualizada del terapeuta
-            
-        Raises:
-            ValueError: Si los datos no son válidos
-            RepositoryException: Si ocurre un error en el repositorio
-        """
-        try:
+    def execute(self, therapist_object, validated_data) -> Therapist:
             for field, value in validated_data.items():
                 if hasattr(therapist_object, field):
                     setattr(therapist_object, field, value)
                 else:
                     raise ValueError(f"Campo inválido para terapeuta: {field}")
             updated_therapist = self.therapist_repository.update(therapist_object, validated_data)
-            
-            return updated_therapist
-        except Exception as e:
-            error_msg = f"Error actualizando terapeuta: {str(e)}"
-            raise Exception(error_msg)
+            return TherapistMapper.to_model(updated_therapist)
+
 
 class DeleteTherapistUseCase:
-    def __init__(self, therapist_repository):
+    def __init__(self, therapist_repository : TherapistRepository):
         self.therapist_repository = therapist_repository
     
-    def execute(self, therapist_id):
+    def execute(self, therapist_id) -> None:
         self.therapist_repository.delete(therapist_id)

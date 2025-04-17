@@ -1,6 +1,6 @@
 from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
 from ...application.domain.entities.therapist import TherapistEntity
-from users.models import User
 from therapists.models import Therapist
 from therapy.models import TherapySession
 from ...application.domain.repositories.therapist_repository import TherapistRepository
@@ -8,196 +8,96 @@ from core.exceptions.custom_exceptions import EntityNotFoundError
 from core.cache.cache_manager import CacheManager
 
 CACHE_PREFIX = "therapist_"
+CACHE_TTL = 3600
 
 class DjangoTherapistRepository(TherapistRepository):
-    """
-    Repository implementation for managing Therapist entities using Django ORM.
-    This repository handles CRUD operations for therapists and integrates caching 
-    to optimize performance.
-    """
-    def __init__(self):
-        """
-        Initializes the repository with a CacheManager instance.
-        """
-        self.cache_manager = CacheManager(CACHE_PREFIX)
-        super().__init__()
+    def __init__(self, cache_manager: CacheManager = None):
+        self.cache_manager = cache_manager or CacheManager(CACHE_PREFIX)
+        self.cache_ttl = CACHE_TTL
 
-
-    def get_by_id(self, therapist_id) -> TherapistEntity:
-        therapist_cache_key = self.cache_manager.get_cache_key(therapist_id)
-
-        therapist_cache = self.cache_manager.get(therapist_cache_key)
-        if therapist_cache:
-            return therapist_cache
-
-        try:
-            therapist = Therapist.objects.get(id=therapist_id)
-
-            self.cache_manager.set(therapist_cache_key, therapist)
+    def get_by_id(self, therapist_id: int) -> TherapistEntity:
+        cache_key = f"{CACHE_PREFIX}id_{therapist_id}"
+        if cached := self.cache_manager.get(cache_key):
+            return cached
             
-            return self._map_to_entity(therapist)
-        except Therapist.DoesNotExist:
-            raise EntityNotFoundError('Therapist')
-
+        therapist = Therapist.objects.get(id=therapist_id)
+        entity = self._map_to_entity(therapist)
+        self.cache_manager.set(cache_key, entity, self.cache_ttl)
+        return entity
 
     def get_by_user_id(self, user_id: int) -> TherapistEntity:
-        """
-        Retrieves a therapist by their associated user ID.
-        If the therapist exists in the cache, it is returned directly.
-        Otherwise, the therapist is fetched from the database and cached.
+        cache_key = f"{CACHE_PREFIX}user_{user_id}"
+        if cached := self.cache_manager.get(cache_key):
+            return cached
+            
+        therapist = Therapist.objects.get(user_id=user_id)
+        entity = self._map_to_entity(therapist)
+        self.cache_manager.set_multi({
+            f"{CACHE_PREFIX}id_{therapist.id}": entity,
+            cache_key: entity
+        }, self.cache_ttl)
+        return entity
 
-        Args:
-            user_id (int): The ID of the user associated with the therapist.
+    def save(self, therapist: TherapistEntity) -> TherapistEntity:
+        if therapist.id:
+            return self._update(therapist)
+        return self._create(therapist)
 
-        Returns:
-            TherapistEntity: The therapist entity.
+    def _create(self, therapist: TherapistEntity) -> TherapistEntity:
+        therapist_model = Therapist.objects.create(
+            user_id=therapist.user_id,
+            name=therapist.name,
+            license_number=therapist.license_number,
+            specialization=therapist.specialization
+        )
+        entity = self._map_to_entity(therapist_model)
+        self._update_cache(entity)
+        return entity
 
-        Raises:
-            EntityNotFoundError: If no therapist is found for the given user ID.
-        """
-        cache_key = self.cache_manager.get_cache_key(user_id)
-
-        cached_therapist = self.cache_manager.get(cache_key)
-        if cached_therapist:
-            return cached_therapist
-
-        try:
-
-            therapist_model = Therapist.objects.get(user_id=user_id)
-            therapist_entity = self._map_to_entity(therapist_model)
-
-
-            self.cache_manager.set(cache_key, therapist_entity)
-            return therapist_entity
-        except Therapist.DoesNotExist:
-            raise EntityNotFoundError("Therapist", user_id)
+    def _update(self, therapist: TherapistEntity) -> TherapistEntity:
+        therapist_model = Therapist.objects.get(id=therapist.id)
+        therapist_model.name = therapist.name
+        therapist_model.license_number = therapist.license_number
+        therapist_model.specialization = therapist.specialization
+        therapist_model.save()
+        entity = self._map_to_entity(therapist_model)
+        self._update_cache(entity)
+        return entity
 
     def get_unique_patient_count(self, therapist_id: int) -> int:
-        """
-        Retrieves the count of unique patients associated with a therapist.
-
-        Args:
-            therapist_id (int): The ID of the therapist.
-
-        Returns:
-            int: The count of unique patients.
-        """
-        cache_key = f"unique_patient_count_{therapist_id}"
-
-        cached_count = self.cache_manager.get(cache_key)
-        if cached_count is not None:
-            return cached_count
-
+        cache_key = f"unique_patients_{therapist_id}"
+        if count := self.cache_manager.get(cache_key):
+            return count
+            
         count = TherapySession.objects.filter(
             therapist_id=therapist_id
-        ).values('patients__id').distinct().count()
-
-        self.cache_manager.set(cache_key, count)
+        ).values('patient_id').distinct().count()
+        self.cache_manager.set(cache_key, count, self.cache_ttl)
         return count
 
     def get_incoming_session_count(self, therapist_id: int) -> int:
-        """
-        Retrieves the count of incoming sessions for a therapist.
-
-        Args:
-            therapist_id (int): The ID of the therapist.
-
-        Returns:
-            int: The count of incoming sessions.
-        """
-        cache_key = f"incoming_session_count_{therapist_id}"
-
-        cached_count = self.cache_manager.get(cache_key)
-        if cached_count is not None:
-            return cached_count
-
+        cache_key = f"incoming_sessions_{therapist_id}"
+        if count := self.cache_manager.get(cache_key):
+            return count
+            
         count = TherapySession.objects.filter(
             therapist_id=therapist_id,
             status='SCHEDULED',
-            start_date__lte=timezone.now()
+            start_date__gte=timezone.now()
         ).count()
-
-        self.cache_manager.set(cache_key, count)
+        self.cache_manager.set(cache_key, count, self.cache_ttl)
         return count
 
-    def create(self, new_therapist: TherapistEntity) -> TherapistEntity:
-        """
-        Creates a new therapist in the database and updates the provided TherapistEntity with database-generated fields.
-        """
-        therapist_model = Therapist.objects.create(
-            user_id= new_therapist.user_id,
-            name=new_therapist.name,
-            license_number=new_therapist.license_number,
-            specialization=new_therapist.specialization
-        )
-
-        new_therapist.id = therapist_model.id
-        new_therapist.created_at = therapist_model.created_at
-        new_therapist.updated_at = therapist_model.updated_at
-
-        cache_key = self.cache_manager.get_cache_key(new_therapist.id)
-        try:
-            self.cache_manager.set(cache_key, new_therapist)
-        except Exception as e:
-            print(f"Cache set failed: {e}")
-
-        return new_therapist
-
-    def update(self, therapist_data: dict, existing_therapist: TherapistEntity) -> TherapistEntity:
-        """
-        Updates an existing therapist in the database and refreshes the cache.
-        """
-        if 'name' in therapist_data:
-            existing_therapist.name = therapist_data['name']
-        if 'license_number' in therapist_data:
-            existing_therapist.license_number = therapist_data['license_number']
-        if 'specialization' in therapist_data:
-            existing_therapist.specialization = therapist_data['specialization']
-
-        # Save the updated therapist to the database
-        therapist_model = self._get_by_id(existing_therapist.id)
-        therapist_model.name = existing_therapist.name
-        therapist_model.license_number = existing_therapist.license_number
-        therapist_model.specialization = existing_therapist.specialization
-        therapist_model.save()
-
-        updated_entity = self._map_to_entity(therapist_model)
-
-        cache_key = self.cache_manager.get_cache_key(updated_entity.id)
-        try:
-            self.cache_manager.set(cache_key, updated_entity)
-        except Exception as e:
-            print(f"Cache set failed: {e}")
-
-        return updated_entity
-
     def delete(self, therapist_id: int) -> None:
-        """
-        Deletes a therapist from the database and removes them from the cache.
-
-        Args:
-            therapist_id (int): The ID of the therapist to delete.
-
-        Raises:
-            EntityNotFoundError: If no therapist is found with the given ID.
-        """
-        therapist = self._get_by_id(therapist_id)
-
+        therapist = Therapist.objects.get(id=therapist_id)
+        user_id = therapist.user_id
         therapist.delete()
-
-        cache_key = self.cache_manager.get_cache_key(therapist_id)
-        self.cache_manager.delete(cache_key)
+        self.cache_manager.delete_multi([
+            f"{CACHE_PREFIX}id_{therapist_id}",
+            f"{CACHE_PREFIX}user_{user_id}"
+        ])
 
     def _map_to_entity(self, model: Therapist) -> TherapistEntity:
-        """
-        Maps a Therapist model instance to a TherapistEntity.
-
-        Args:
-            model (Therapist): The Therapist model instance.
-
-        Returns:
-            TherapistEntity: The mapped therapist entity.
-        """
         return TherapistEntity(
             id=model.id,
             user_id=model.user_id,
@@ -207,9 +107,9 @@ class DjangoTherapistRepository(TherapistRepository):
             created_at=model.created_at,
             updated_at=model.updated_at
         )
-    
-    def _get_by_id(self, therapist_id):
-        try:
-            return Therapist.objects.get(id=therapist_id)
-        except Therapist.DoesNotExist:
-            raise EntityNotFoundError("Therapist", therapist_id)
+
+    def _update_cache(self, entity: TherapistEntity) -> None:
+        self.cache_manager.set_multi({
+            f"{CACHE_PREFIX}id_{entity.id}": entity,
+            f"{CACHE_PREFIX}user_{entity.user_id}": entity
+        }, self.cache_ttl)

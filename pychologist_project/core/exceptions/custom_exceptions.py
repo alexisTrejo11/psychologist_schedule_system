@@ -20,6 +20,15 @@ class BusinessLogicError(Exception):
         super().__init__(message)
 
 
+class DomainError(Exception):
+    """
+    Custom exception for business logic errors.
+    """
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(message)
+
+
 class InvalidOperationError(Exception):
     """
     Custom exception for invalid operations.
