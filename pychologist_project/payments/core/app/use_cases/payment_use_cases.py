@@ -3,12 +3,11 @@ from ...domain.repository.payment_repository import PaymentRepository
 from ...domain.entities.payment import PaymentEntity
 from ..stripe_services import StripeServiceInterface
 from ....models import Payment as PaymentModel
-from core.pagination.page_helper import PaginatedResponse, PaginationInput
+from core.pagination.page_helper import PaginatedResponse
 from core.mappers.payment.payment_mappers import PaymentMapper
 from ....models import PAYMENT_TYPES
 
 # Map?
-
 class GetPaymentUseCase:
     def __init__(self, payment_repository: PaymentRepository):
         self.repository = payment_repository

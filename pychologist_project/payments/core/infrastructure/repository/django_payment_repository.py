@@ -68,7 +68,7 @@ class DjangoPaymentRepository(PaymentRepository):
 
         return paginated_response
 
-    def get_by_patient_id_pageable(self, patient_id: int,  pagination_input : PaginationInput) -> PaginationHelper[PaymentEntity]:
+    def get_by_patient_id_pageable(self, patient_id: int,  pagination_input : PaginationInput) -> PaginatedResponse[PaymentEntity]:
         queryset = Payment.objects.filter(
             patient_id=patient_id
         ).order_by('-paid_at')
@@ -140,3 +140,4 @@ class DjangoPaymentRepository(PaymentRepository):
             return Payment.objects.get(id=payment_id)
         except Payment.DoesNotExist:
             raise EntityNotFoundError('payment', payment_id)
+

@@ -52,7 +52,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'core.auditlog.middleware.AuditLogMiddleware',
+    'core.log.middleware.AuditLogMiddleware',
 ]
 
 ROOT_URLCONF = 'pychologist_project.urls'

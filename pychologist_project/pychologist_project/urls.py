@@ -3,13 +3,12 @@ from django.urls import path, include, re_path
 
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
-from rest_framework.permissions import AllowAny
 
 from rest_framework.routers import DefaultRouter
 from patients.core.infrastructure.api.views.views import PatientViewSet
 from therapists.core.infrastructure.adapters.views.therapist_manager_views import TherapistViewSet
-from core.auditlog.views import AuditLogListView
-from payments.views import PaymentListCreateView, PaymentRetrieveUpdateDestroyView
+from core.log.views import AuditLogListView
+from payments.core.infrastructure.api.views.payment_manager_view import PaymentApiView
 from therapy.views import TherapySessionViewSet
 
 from users.core.presentation.api.controllers.user_manager_views import UserViewSet
@@ -62,8 +61,11 @@ urlpatterns = [
     ),
 
     # Payment 
-    path('payments/', PaymentListCreateView.as_view(), name='payment-list-create'),
-    path('payments/<int:payment_id>/', PaymentRetrieveUpdateDestroyView.as_view(), name='payment-detail'),
+    path('payments/', PaymentApiView.as_view(), name='payment-search'),
+    path('payments/', PaymentApiView.as_view(), name='payment-create'),
+    path('payments/<int:payment_id>/', PaymentApiView.as_view(), name='payment-retrieve'),
+    path('payments/<int:payment_id>/', PaymentApiView.as_view(), name='payment-update'),
+    path('payments/<int:payment_id>/', PaymentApiView.as_view(), name='payment-delete'),
 
     # Audit log
     path('audit-logs/', AuditLogListView.as_view(), name='audit-log-list'),
