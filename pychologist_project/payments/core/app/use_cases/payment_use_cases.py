@@ -5,7 +5,9 @@ from ..stripe_services import StripeServiceInterface
 from ....models import Payment as PaymentModel
 from core.pagination.page_helper import PaginatedResponse
 from core.mappers.payment.payment_mappers import PaymentMapper
+from core.pagination.page_helper import PaginationInput
 from ....models import PAYMENT_TYPES
+
 
 # Map?
 class GetPaymentUseCase:
@@ -21,10 +23,10 @@ class SearchPaymentsUseCase:
     def __init__(self, payment_repository: PaymentRepository):
         self.repository = payment_repository
 
-    def execute(self, payment_filters: Dict) -> PaginatedResponse[PaymentModel]:
+    def execute(self, payment_filters: Dict, page_input : PaginationInput) -> PaginatedResponse[PaymentModel]:
         self._validate_payment_params(payment_filters)
 
-        return self.repository.search(payment_filters)
+        return self.repository.search(payment_filters, page_input)
     
     #TODO: Move
     def _validate_payment_params(self, payment_filters: dict) -> None:
@@ -37,6 +39,8 @@ class SearchPaymentsUseCase:
         Raises:
             ValueError: Si algún filtro no es válido
         """
+        if not payment_filters:
+            return
         # Validar amount_min
         amount_min = payment_filters.get('amount_min')
         if amount_min is not None:

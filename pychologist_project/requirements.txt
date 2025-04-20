@@ -20,3 +20,4 @@ django-crontab
 twilio
 stripe
 django-cors-headers
+django-injector

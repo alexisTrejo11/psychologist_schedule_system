@@ -26,25 +26,25 @@ class DjangoPaymentRepository(PaymentRepository):
         return PaymentMapper.to_entity(payment)
     
     def search(self, payment_filters: dict, pagination_input : PaginationInput) -> PaginatedResponse[PaymentEntity]:
-        query = PaymentSearchFilters(
-            amount_max=payment_filters['amount_max'],
-            amount_min=payment_filters['amount_min'],
-            paid_before=payment_filters['paid_before'],
-            paid_after=payment_filters['paid_after'],
-            patient_id=payment_filters['patient_id'],
-            therapist_id=payment_filters['therapist_id'],
-            receipt_number=payment_filters['receipt_number'],
-            payment_type=payment_filters['payment_type'],
+        filters = PaymentSearchFilters(
+            amount_min=payment_filters.get('amount_min'),
+            amount_max=payment_filters.get('amount_max'),
+            payment_type=payment_filters.get('payment_type'),
+            receipt_number=payment_filters.get('receipt_number'),
+            paid_after=payment_filters.get('paid_after'),
+            paid_before=payment_filters.get('paid_before'),
+            therapist_id=payment_filters.get('therapist_id'),
+            patient_id=payment_filters.get('patient_id'),
         )
 
-        payments = Payment.objects.filter(query).order_by('-paid-at')
+        payments = Payment.objects.filter(filters.to_query()).order_by('-paid_at')
         
         return PaginationHelper.get_paginated_response(
-            payments, 
             pagination_input,
+            payments, 
             PaymentMapper.to_entity)
 
-    def get_paginated_by_therapist_id(self, therapist_id: int, pagination_input : PaginationInput) -> PaginatedResponse[PaymentEntity]:            
+    def get_pageable_by_therapist_id(self, therapist_id: int, pagination_input : PaginationInput) -> PaginatedResponse[PaymentEntity]:            
         queryset = Payment.objects.filter(
             paid_to_id=therapist_id
         ).order_by('-paid_at')
@@ -68,7 +68,7 @@ class DjangoPaymentRepository(PaymentRepository):
 
         return paginated_response
 
-    def get_by_patient_id_pageable(self, patient_id: int,  pagination_input : PaginationInput) -> PaginatedResponse[PaymentEntity]:
+    def get_pageable_by_patient_id(self, patient_id: int,  pagination_input : PaginationInput) -> PaginatedResponse[PaymentEntity]:
         queryset = Payment.objects.filter(
             patient_id=patient_id
         ).order_by('-paid_at')

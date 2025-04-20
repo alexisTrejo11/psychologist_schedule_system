@@ -1,10 +1,12 @@
-from rest_framework.views import APIView
+from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 import logging
 from core.pagination.serializers.paginations_serializers import PaginatedResponseSerializer
 from core.api_response.response import ApiResponse
+from core.pagination.page_helper import PaginationInput
 from ..serializers.serializers import PaymentSerializer, PaymentSearchSerializer
 from ...repository.django_payment_repository import DjangoPaymentRepository
 from ....app.use_cases.payment_use_cases import (
@@ -14,10 +16,13 @@ from ....app.use_cases.payment_use_cases import (
     SearchPaymentsUseCase,
     SoftDeletePaymentUseCase
 )
+from dataclasses import asdict
+
 
 log = logging.getLogger('audit_logger')
 
-class PaymentApiView(APIView):
+class PaymentViewSet(ViewSet):
+
     def __init__(self, **kwargs):
         self.payment_repostiory = DjangoPaymentRepository()
         self.get_payment_use_case = GetPaymentUseCase(payment_repository=self.payment_repostiory)
@@ -73,11 +78,7 @@ class PaymentApiView(APIView):
             ),
         ],
     )
-    def search(self, request):
-
-        """
-        Search payments with dynamic filters.
-        """
+    def list(self, request):
         user = request.user if request.user.is_authenticated else None
         ip_address = request.META.get('REMOTE_ADDR')
 
@@ -85,22 +86,65 @@ class PaymentApiView(APIView):
 
         search_serializer = PaymentSearchSerializer(data=request.query_params)
         search_serializer.is_valid(raise_exception=True)
+        
+        page_input = self.get_pagination_data(request)
 
-        pagination_response = self.search_payment_use_case.execute(**search_serializer.validated_data)
+        pagination_response = self.search_payment_use_case.execute(search_serializer.data, page_input=page_input)
         
         log.info(f"SEARCH PAYMENTS SUCCESS | Items Retrieved: {len(pagination_response.items)}")
 
-        paginated_response_data = PaginatedResponseSerializer({
+
+        paginated_response_serializer = PaginatedResponseSerializer(
+            data={
                 "items": pagination_response.items,
-                "metadata": pagination_response.metadata,
-            }).data
+                "metadata": asdict(pagination_response.metadata),
+            },
+            item_serializer=PaymentSerializer,  
+        )
+        paginated_response_serializer.is_valid(raise_exception=True)
         
         response = ApiResponse.format_response(
-                data=paginated_response_data,
+                data= paginated_response_serializer.data,
                 success=True,
                 message="Payments Successfully Retrieved",
             )
         
+        return Response(response, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        summary="Retrieve a payment",
+        description="Retrieves a single payment by ID.",
+        responses={
+            200: PaymentSerializer,
+            404: OpenApiTypes.OBJECT,
+        },
+        parameters=[
+            OpenApiParameter(
+                name='payment_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                description='ID of the payment to retrieve.',
+                required=True,
+            ),
+        ],
+    )
+    def retrieve(self, request, pk):
+        payment_id = pk 
+        user = request.user if request.user.is_authenticated else None
+        ip_address = request.META.get('REMOTE_ADDR')
+
+        log.info(f"RETRIEVE PAYMENT REQUEST | User: {user}, IP: {ip_address}, Payment ID: {payment_id}")
+
+        payment = self.get_payment_use_case.execute(payment_id)
+        
+        log.info(f"RETRIEVE PAYMENT SUCCESS | Payment ID: {payment.id}")
+
+        response = ApiResponse.format_response(
+                data=PaymentSerializer(payment).data,
+                success=True,
+                message="Payments Successfully Retrieved",
+            )
+
         return Response(response, status=status.HTTP_200_OK)
 
     @extend_schema(
@@ -133,42 +177,6 @@ class PaymentApiView(APIView):
         
         return Response(response, status=status.HTTP_201_CREATED)
 
-
-    @extend_schema(
-        summary="Retrieve a payment",
-        description="Retrieves a single payment by ID.",
-        responses={
-            200: PaymentSerializer,
-            404: OpenApiTypes.OBJECT,
-        },
-        parameters=[
-            OpenApiParameter(
-                name='payment_id',
-                type=OpenApiTypes.INT,
-                location=OpenApiParameter.PATH,
-                description='ID of the payment to retrieve.',
-                required=True,
-            ),
-        ],
-    )
-    def retrieve(self, request, payment_id):
-        user = request.user if request.user.is_authenticated else None
-        ip_address = request.META.get('REMOTE_ADDR')
-
-        log.info(f"RETRIEVE PAYMENT REQUEST | User: {user}, IP: {ip_address}, Payment ID: {payment_id}")
-
-        payment = self.get_payment_use_case.execute(payment_id)
-        
-        log.info(f"RETRIEVE PAYMENT SUCCESS | Payment ID: {payment.id}")
-
-        response = ApiResponse.format_response(
-                data=PaymentSerializer(payment).data,
-                success=True,
-                message="Payments Successfully Retrieved",
-            )
-
-        return Response(response, status=status.HTTP_200_OK)
-
     @extend_schema(
         summary="Update a payment",
         description="Updates an existing payment record.",
@@ -188,7 +196,7 @@ class PaymentApiView(APIView):
             ),
         ],
     )
-    def put(self, request, payment_id):
+    def update(self, request, payment_id):
         user = request.user if request.user.is_authenticated else None
         ip_address = request.META.get('REMOTE_ADDR')
 
@@ -227,7 +235,8 @@ class PaymentApiView(APIView):
             ),
         ],
     )
-    def delete(self, request, payment_id):
+    def destroy(self, request, pk):
+        payment_id = pk
         user = request.user if request.user.is_authenticated else None
         ip_address = request.META.get('REMOTE_ADDR')
 
@@ -240,3 +249,12 @@ class PaymentApiView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+    def get_pagination_data(self, request) -> PaginationInput:
+        try:
+            page_number = int(request.query_params.get('page', 1))
+            page_size = int(request.query_params.get('page_size', 10))
+        except ValueError:
+            page_number = 1
+            page_size = 10
+
+        return PaginationInput(page_number=page_number, page_size=page_size)

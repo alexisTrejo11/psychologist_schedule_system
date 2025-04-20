@@ -5,7 +5,7 @@ from dataclasses import dataclass
 T = TypeVar('T')
 
 class PaginationInput:
-    def __init__(self, page_number : int = 1, page_size : int = 10):
+    def __init__(self, page_number: int = 1, page_size: int = 10):
         self.page_number = page_number
         self.page_size = page_size
 
@@ -40,8 +40,8 @@ class PaginatedResponse(Generic[T]):
 class PaginationHelper:
     @staticmethod
     def get_paginated_response(
-        queryset, 
         pagination_input: PaginationInput,
+        queryset=[], 
         mapper_fn=lambda x: x
     ) -> PaginatedResponse:
         try:
