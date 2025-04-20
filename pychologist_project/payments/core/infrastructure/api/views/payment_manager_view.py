@@ -2,10 +2,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
-from ..serializers.serializers import PaymentSerializer, PaymentSearchSerializer
+import logging
 from core.pagination.serializers.paginations_serializers import PaginatedResponseSerializer
-from ...repository.django_payment_repository import DjangoPaymentRepository
 from core.api_response.response import ApiResponse
+from ..serializers.serializers import PaymentSerializer, PaymentSearchSerializer
+from ...repository.django_payment_repository import DjangoPaymentRepository
 from ....app.use_cases.payment_use_cases import (
     GetPaymentUseCase, 
     CreatePaymentUseCase, 
@@ -13,6 +14,9 @@ from ....app.use_cases.payment_use_cases import (
     SearchPaymentsUseCase,
     SoftDeletePaymentUseCase
 )
+
+log = logging.getLogger('audit_logger')
+
 class PaymentApiView(APIView):
     def __init__(self, **kwargs):
         self.payment_repostiory = DjangoPaymentRepository()
@@ -70,14 +74,22 @@ class PaymentApiView(APIView):
         ],
     )
     def search(self, request):
+
         """
         Search payments with dynamic filters.
         """
+        user = request.user if request.user.is_authenticated else None
+        ip_address = request.META.get('REMOTE_ADDR')
+
+        log.info(f"SEARCH PAYMENTS REQUEST | User: {user}, IP: {ip_address}, Query Params: ")
+
         search_serializer = PaymentSearchSerializer(data=request.query_params)
         search_serializer.is_valid(raise_exception=True)
 
         pagination_response = self.search_payment_use_case.execute(**search_serializer.validated_data)
         
+        log.info(f"SEARCH PAYMENTS SUCCESS | Items Retrieved: {len(pagination_response.items)}")
+
         paginated_response_data = PaginatedResponseSerializer({
                 "items": pagination_response.items,
                 "metadata": pagination_response.metadata,
@@ -101,11 +113,18 @@ class PaymentApiView(APIView):
         },
     )
     def post(self, request):
+        user = request.user if request.user.is_authenticated else None
+        ip_address = request.META.get('REMOTE_ADDR')
+
+        log.info(f"CREATE PAYMENT REQUEST | User: {user}, IP: {ip_address}, Data: {request.data}")
+
         serializer = PaymentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         payment = self.create_payment_use_case.execute(**serializer.validated_data)
-        
+
+        log.info(f"CREATE PAYMENT SUCCESS | Payment ID: {payment.id}")
+
         response = ApiResponse.format_response(
                         data=PaymentSerializer(payment).data,
                         success=True,
@@ -133,8 +152,15 @@ class PaymentApiView(APIView):
         ],
     )
     def retrieve(self, request, payment_id):
+        user = request.user if request.user.is_authenticated else None
+        ip_address = request.META.get('REMOTE_ADDR')
+
+        log.info(f"RETRIEVE PAYMENT REQUEST | User: {user}, IP: {ip_address}, Payment ID: {payment_id}")
+
         payment = self.get_payment_use_case.execute(payment_id)
         
+        log.info(f"RETRIEVE PAYMENT SUCCESS | Payment ID: {payment.id}")
+
         response = ApiResponse.format_response(
                 data=PaymentSerializer(payment).data,
                 success=True,
@@ -163,10 +189,17 @@ class PaymentApiView(APIView):
         ],
     )
     def put(self, request, payment_id):
+        user = request.user if request.user.is_authenticated else None
+        ip_address = request.META.get('REMOTE_ADDR')
+
+        log.info(f"UPDATE PAYMENT REQUEST | User: {user}, IP: {ip_address}, Payment ID: {payment_id}, Data: {request.data}")
+
         serializer = PaymentSerializer(data=request.data, partial=True)
         serializer.is_valid(raise_expection=True)
 
         payment_updated = self.update_payment_use_case.execute(payment_id, **serializer.validated_data)
+
+        log.info(f"UPDATE PAYMENT SUCCESS | Payment ID: {payment_updated.id}")
 
         response = ApiResponse.format_response(
             data=PaymentSerializer(payment_updated).data,
@@ -195,7 +228,15 @@ class PaymentApiView(APIView):
         ],
     )
     def delete(self, request, payment_id):
+        user = request.user if request.user.is_authenticated else None
+        ip_address = request.META.get('REMOTE_ADDR')
+
+        log.info(f"DELETE PAYMENT REQUEST | User: {user}, IP: {ip_address}, Payment ID: {payment_id}")
+
         self.soft_delete_payment_use_case.execute(payment_id)
+
+        log.info(f"DELETE PAYMENT SUCCESS | Payment ID: {payment_id}")
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
