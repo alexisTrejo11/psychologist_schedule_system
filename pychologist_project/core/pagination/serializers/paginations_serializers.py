@@ -1,6 +1,5 @@
 from rest_framework import serializers
 
-
 class PaginationMetadataSerializer(serializers.Serializer):
     total_items = serializers.IntegerField()
     total_pages = serializers.IntegerField()

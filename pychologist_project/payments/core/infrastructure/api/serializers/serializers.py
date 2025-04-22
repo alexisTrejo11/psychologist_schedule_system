@@ -52,11 +52,52 @@ class PaymentSerializer(serializers.ModelSerializer):
     def validate_receipt_number(self, value):
         """
         Verifies that the receipt number is unique if provided.
+        Ignores the current payment during updates.
         """
-        if value and Payment.objects.filter(receipt_number=value).exists():
-            raise serializers.ValidationError("Receipt number already exists")
+        if value:
+            instance = getattr(self, 'instance', None)  
+            queryset = Payment.objects.filter(receipt_number=value)
+            
+            if instance and instance.id:
+                queryset = queryset.exclude(id=instance.id)
+            
+            if queryset.exists():
+                raise serializers.ValidationError("Receipt number already exists")
+        
         return value
     
+
+class PaymentOutputSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = [
+            'id',
+            'amount',
+            'payment_type',
+            'paid_at',
+            'receipt_number',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'paid_at', 'created_at', 'updated_at']
+
+    amount = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        help_text="Amount of the payment."
+    )
+
+    payment_type = serializers.ChoiceField(
+        choices=Payment.PAYMENT_TYPES,
+        help_text="Type of payment (e.g., CASH, CARD, TRANSFER)."
+    )
+
+    receipt_number = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        help_text="Receipt number for the payment."
+    )
+
 
 class PaymentSearchSerializer(serializers.Serializer):
     """Serializer to validate search parameters."""

@@ -7,6 +7,7 @@ from core.pagination.page_helper import PaginatedResponse
 from core.mappers.payment.payment_mappers import PaymentMapper
 from core.pagination.page_helper import PaginationInput
 from ....models import PAYMENT_TYPES
+from core.exceptions.custom_exceptions import EntityNotFoundError
 
 
 # Map?
@@ -26,8 +27,13 @@ class SearchPaymentsUseCase:
     def execute(self, payment_filters: Dict, page_input : PaginationInput) -> PaginatedResponse[PaymentModel]:
         self._validate_payment_params(payment_filters)
 
-        return self.repository.search(payment_filters, page_input)
+        paginated_data = self.repository.search(payment_filters, page_input)
+        if len(paginated_data.items) > 0:    
+            itemsMapped = [PaymentMapper.to_model(payment_entity) for payment_entity in paginated_data.items] 
+            paginated_data.items = itemsMapped
     
+        return paginated_data
+
     #TODO: Move
     def _validate_payment_params(self, payment_filters: dict) -> None:
         """
@@ -92,11 +98,27 @@ class UpdatePaymentUseCase:
 
     def execute(self, payment_id: int, update_data: Dict) -> PaymentModel:
         existing_payment = self.repository.get_by_id(payment_id)
-        updated_payment = PaymentEntity(
-            id=existing_payment.id,
-            **{**existing_payment.__dict__, **update_data}
-        )
+        if not existing_payment:
+            raise EntityNotFoundError(f"Payment with id {payment_id} not found")
+
+        public_attributes = {
+            "id": existing_payment.id,
+            "patient_id": existing_payment.patient_id,
+            "paid_to_id": existing_payment.paid_to_id,
+            "amount": existing_payment.amount,
+            "payment_type": existing_payment.payment_type,
+            "paid_at": existing_payment.paid_at,
+            "receipt_number": existing_payment.receipt_number,
+            "created_at": existing_payment.created_at,
+            "updated_at": existing_payment.updated_at,
+        }
+
+        updated_attributes = {**public_attributes, **update_data}
+
+        updated_payment = PaymentEntity(**updated_attributes)
+
         payment_model = self.repository.save(updated_payment)
+        
         return PaymentMapper.to_model(payment_model)
 
 

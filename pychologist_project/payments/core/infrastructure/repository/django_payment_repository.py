@@ -3,10 +3,10 @@ from core.cache.cache_manager import CacheManager
 from payments.core.domain.entities.payment import PaymentEntity
 from payments.core.domain.repository.payment_repository import PaymentRepository
 from ....models import Payment                      
+from ..filters.django_payment_search_filters import PaymentSearchFilters
 from core.mappers.payment.payment_mappers import PaymentMapper
 from core.exceptions.custom_exceptions import EntityNotFoundError
 from core.pagination.page_helper import PaginationHelper, PaginationInput, PaginatedResponse
-from ..filters.django_payment_search_filters import PaymentSearchFilters
 
 CACHE_PREFIX = 'payment_'
 
@@ -17,11 +17,12 @@ class DjangoPaymentRepository(PaymentRepository):
 
     def get_by_id(self, payment_id: int) -> PaymentEntity:
         cache_key = self.cache_manager.get_cache_key(payment_id)
+        
         payment_cache = self.cache_manager.get(cache_key)
         if payment_cache:
             return payment_cache
 
-        payment = self._get_payment(payment_id)
+        payment = self._get_payment(payment_id) 
 
         return PaymentMapper.to_entity(payment)
     
@@ -60,8 +61,8 @@ class DjangoPaymentRepository(PaymentRepository):
             return cached_response
 
         paginated_response = PaginationHelper.get_paginated_response(
-            queryset, 
             pagination_input,
+            queryset, 
             PaymentMapper.to_entity)
 
         self.cache_manager.set(cache_key, paginated_response)
@@ -84,8 +85,8 @@ class DjangoPaymentRepository(PaymentRepository):
             return cached_response
 
         paginated_response = PaginationHelper.get_paginated_response(
-            queryset, 
             pagination_input,
+            queryset, 
             PaymentMapper.to_entity)
     
         self.cache_manager.set(cache_key, paginated_response)
