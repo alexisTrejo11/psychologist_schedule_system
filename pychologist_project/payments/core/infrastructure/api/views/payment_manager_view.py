@@ -1,13 +1,11 @@
 from rest_framework.viewsets import ViewSet
-from rest_framework.response import Response
-from rest_framework import status
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 from dataclasses import asdict
 import logging
+from core.pagination.page_helper import get_pagination_data
 from core.pagination.serializers.paginations_serializers import PaginatedResponseSerializer
-from core.api_response.response import ApiResponse
-from core.pagination.page_helper import PaginationInput
+from core.api_response.response import DjangoResponseWrapper as ResponseWrapper
 from ..serializers.serializers import PaymentSerializer, PaymentSearchSerializer, PaymentOutputSerializer
 from ...repository.django_payment_repository import DjangoPaymentRepository
 from ....app.use_cases.payment_use_cases import (
@@ -18,11 +16,10 @@ from ....app.use_cases.payment_use_cases import (
     SoftDeletePaymentUseCase
 )
 
-
 log = logging.getLogger('audit_logger')
 
 class PaymentViewSet(ViewSet):
-    
+    # Add Permisions
     def __init__(self, **kwargs):
         self.payment_repostiory = DjangoPaymentRepository()
         self.get_payment_use_case = GetPaymentUseCase(payment_repository=self.payment_repostiory)
@@ -87,7 +84,7 @@ class PaymentViewSet(ViewSet):
         search_serializer = PaymentSearchSerializer(data=request.query_params)
         search_serializer.is_valid(raise_exception=True)
         
-        page_input = self.get_pagination_data(request)
+        page_input = get_pagination_data(request)
 
         pagination_response = self.search_payment_use_case.execute(search_serializer.data, page_input=page_input)
         
@@ -102,13 +99,8 @@ class PaymentViewSet(ViewSet):
         )
         paginated_response_serializer.is_valid(raise_exception=True)
         
-        response = ApiResponse.format_response(
-                data= paginated_response_serializer.data,
-                success=True,
-                message="Payments Successfully Retrieved",
-            )
+        return ResponseWrapper.found(data=paginated_response_serializer.data, entity='Payments')
         
-        return Response(response, status=status.HTTP_200_OK)
 
     @extend_schema(
         summary="Retrieve a payment",
@@ -135,16 +127,17 @@ class PaymentViewSet(ViewSet):
         log.info(f"RETRIEVE PAYMENT REQUEST | User: {user}, IP: {ip_address}, Payment ID: {payment_id}")
 
         payment = self.get_payment_use_case.execute(payment_id)
-        
+
         log.info(f"RETRIEVE PAYMENT SUCCESS | Payment ID: {payment.id}")
 
-        response = ApiResponse.format_response(
-                data=PaymentSerializer(payment).data,
-                success=True,
-                message="Payments Successfully Retrieved",
-            )
+        from rest_framework.response import Response
 
-        return Response(response, status=status.HTTP_200_OK)
+        return ResponseWrapper.found(
+            data=PaymentSerializer(payment).data,
+            entity='Payment',
+            param='ID',
+            value=payment_id
+        )
 
     @extend_schema(
         summary="Create a new payment",
@@ -168,21 +161,4 @@ class PaymentViewSet(ViewSet):
 
         log.info(f"CREATE PAYMENT SUCCESS | Payment ID: {payment.id}")
 
-        response = ApiResponse.format_response(
-                        data=PaymentSerializer(payment).data,
-                        success=True,
-                        message="Payments Successfully Retrieved",
-                    )
-        
-        return Response(response, status=status.HTTP_201_CREATED)
-
-
-    def get_pagination_data(self, request) -> PaginationInput:
-        try:
-            page_number = int(request.query_params.get('page', 1))
-            page_size = int(request.query_params.get('page_size', 10))
-        except ValueError:
-            page_number = 1
-            page_size = 10
-
-        return PaginationInput(page_number=page_number, page_size=page_size)
+        return ResponseWrapper.created(data=PaymentSerializer(payment).data, entity='Payment')

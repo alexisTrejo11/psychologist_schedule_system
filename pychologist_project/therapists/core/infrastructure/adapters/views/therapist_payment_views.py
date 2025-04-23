@@ -1,27 +1,36 @@
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
-from core.api_response.response import ApiResponse
-from payments.serializers import PaymentSerializer
-from ....application.therpist_payment_user_case import (
-    GetTherapistPaymentsUseCase,
-    GetTherapistPaymentUseCase,
-    CreateTherapistPaymentUseCase,
-    UpdateTherapistPaymentUseCase,
-    DeleteTherapistPaymentUseCase,
-)
-from ..infrastructure.repositories import DjangoPaymentRepository
-from payments.services import PaymentService
+from core.api_response.response import DjangoResponseWrapper as ResponseWrapper
+from core.pagination import page_helper
+from payments.core.infrastructure.api.serializers.serializers import PaymentSerializer
+from payments.core.infrastructure.repository.django_payment_repository import DjangoPaymentRepository
+from payments.core.app.use_cases.payment_use_cases import CreatePaymentUseCase, UpdatePaymentUseCase, SoftDeletePaymentUseCase
+from therapists.core.application.therapist_use_case import GetTherapistByUserUseCase
+from ....application.therpist_payment_user_case import (GetTherapistPaymentsListUseCase,GetTherapistPaymentUseCase,)
+from ....infrastructure.repositories.django_therapist_repository import DjangoTherapistRepository
+from payments.core.infrastructure.api.serializers.serializers import PaymentSerializer, PaymentOutputSerializer
+from core.pagination.serializers.paginations_serializers import PaginatedResponseSerializer
+from dataclasses import asdict
+
 
 class TherapistPaymentView(APIView):
+    def __init__(self, **kwargs):
+        payment_repository = DjangoPaymentRepository()
+        therapist_repository = DjangoTherapistRepository()
+        self.get_therapist_by_user_use_case = GetTherapistByUserUseCase(therapist_repository)
+        self.get_therapist_payment_use_case = GetTherapistPaymentUseCase(payment_repository)
+        self.get_therapist_payment_list_use_case = GetTherapistPaymentsListUseCase(payment_repository)
+        self.create_payment_use_case = CreatePaymentUseCase(payment_repository)
+        self.update_payment_use_case = UpdatePaymentUseCase(payment_repository)
+        self.delete_payment_use_case = SoftDeletePaymentUseCase(payment_repository)
+        super().__init__(**kwargs)
+
     """
     API endpoints for managing therapist payments.
     """
     permission_classes = [IsAuthenticated]
-    payment_repository = DjangoPaymentRepository()
-    payment_service = PaymentService()
 
     @extend_schema(
         summary="List Therapist Payments",
@@ -32,21 +41,21 @@ class TherapistPaymentView(APIView):
             500: OpenApiTypes.OBJECT,
         },
     )
-    def get(self, request):
+    def list(self, request):
         """
         Retrieve a list of all payments for the authenticated therapist.
         """
         user = request.user
+        pagination_input = page_helper.get_pagination_data(request)
 
-        use_case = GetTherapistPaymentsUseCase(self.payment_repository)
-        payments = use_case.execute(user)
+        therapist = self.get_therapist_by_user_use_case.execute(user)
 
-        formatted_response = ApiResponse.format_response(
-            data=PaymentSerializer(payments, many=True).data,
-            success=True,
-            message="Therapist payments retrieved successfully."
-        )
-        return Response(formatted_response, status=status.HTTP_200_OK)
+        paginated_payments = self.get_therapist_payment_list_use_case.execute(therapist, pagination_input)
+
+        paginated_payments.items =[PaymentOutputSerializer(payment).data for payment in paginated_payments.items]
+        paginated_response_data = serialize_pagination_response(paginated_payments, PaymentOutputSerializer)
+        
+        return ResponseWrapper.found(data=paginated_response_data, entity='Therapist Payments')
 
     @extend_schema(
         summary="Create a New Payment",
@@ -66,24 +75,10 @@ class TherapistPaymentView(APIView):
         serializer = PaymentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        use_case = CreateTherapistPaymentUseCase(self.payment_service)
-        payment = use_case.execute(serializer.validated_data)
+        payment = self.create_payment_use_case.execute(**serializer.validated_data)
 
-        formatted_response = ApiResponse.format_response(
-            data=PaymentSerializer(payment).data,
-            success=True,
-            message="Payment created successfully."
-        )
-        return Response(formatted_response, status=status.HTTP_201_CREATED)
+        return ResponseWrapper.created(PaymentOutputSerializer(payment).data, 'Payment')
 
-
-class TherapistPaymentDetailView(APIView):
-    """
-    API endpoints for managing individual therapist payments.
-    """
-    permission_classes = [IsAuthenticated]
-    payment_repository = DjangoPaymentRepository()
-    payment_service = PaymentService()
 
     @extend_schema(
         summary="Retrieve a Specific Payment",
@@ -109,24 +104,16 @@ class TherapistPaymentDetailView(APIView):
         Retrieve a specific payment for the authenticated therapist.
         """
         user = request.user
+        therapist = self.get_therapist_by_user_use_case.execute(user)
 
-        use_case = GetTherapistPaymentUseCase(self.payment_repository)
-        payment = use_case.execute(user, payment_id)
+        payment = self.get_therapist_payment_use_case.execute(therapist, payment_id)
 
-        if not payment:
-            formatted_response = ApiResponse.format_response(
-                data=None,
-                success=False,
-                message="Payment not found."
-            )
-            return Response(formatted_response, status=status.HTTP_404_NOT_FOUND)
-
-        formatted_response = ApiResponse.format_response(
-            data=PaymentSerializer(payment).data,
-            success=True,
-            message="Payment retrieved successfully."
+        return ResponseWrapper.found(
+            data=PaymentOutputSerializer(payment).data, 
+            entity='Therapist Payment', 
+            param='payment ID',
+            value=payment_id,
         )
-        return Response(formatted_response, status=status.HTTP_200_OK)
 
     @extend_schema(
         summary="Update an Existing Payment",
@@ -158,24 +145,10 @@ class TherapistPaymentDetailView(APIView):
         serializer = PaymentSerializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
-        use_case = UpdateTherapistPaymentUseCase(self.payment_service, self.payment_repository)
-        payment = use_case.execute(payment_id, user, serializer.validated_data)
+        payment = self.update_payment_use_case.execute(payment_id, user, serializer.validated_data)
 
-        if not payment:
-            formatted_response = ApiResponse.format_response(
-                data=None,
-                success=False,
-                message="Payment not found."
-            )
-            return Response(formatted_response, status=status.HTTP_404_NOT_FOUND)
-
-        formatted_response = ApiResponse.format_response(
-            data=PaymentSerializer(payment).data,
-            success=True,
-            message="Payment updated successfully."
-        )
-        return Response(formatted_response, status=status.HTTP_200_OK)
-
+        return ResponseWrapper.updated(PaymentSerializer(payment).data)
+        
     @extend_schema(
         summary="Delete a Payment",
         description="Deletes a payment for the authenticated therapist.",
@@ -201,12 +174,20 @@ class TherapistPaymentDetailView(APIView):
         """
         user = request.user
 
-        use_case = DeleteTherapistPaymentUseCase(self.payment_service)
-        use_case.execute(user, payment_id)
+        self.delete_payment_use_case.execute(user, payment_id)
 
-        formatted_response = ApiResponse.format_response(
-            data=None,
-            success=True,
-            message="Payment deleted successfully."
+        return ResponseWrapper.no_content("Payment deleted successfully.")
+    
+
+def serialize_pagination_response(self, paginated_payments, serializer):
+    paginated_response_serializer = PaginatedResponseSerializer(
+            data={
+                "items": paginated_payments.items,
+                "metadata": asdict(paginated_payments.metadata),
+            },
+            item_serializer=serializer,  
         )
-        return Response(formatted_response, status=status.HTTP_204_NO_CONTENT)
+
+    paginated_response_serializer.is_valid(raise_exception=True)
+
+    return paginated_response_serializer.data

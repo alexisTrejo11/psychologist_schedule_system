@@ -5,7 +5,7 @@ from rest_framework import status
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 from ..serializers.serializers import TherapySessionSerializer
 from therapy.serializers import TherapySessionSerializer
-from core.api_response.response import ApiResponse
+from core.api_response.response import DjangoResponseWrapper as ResponseWrapper
 from ....application.therapist_session_case import (
     GetTherapistIncomingSessionsUseCase,
     GetTherapistSessionListUseCase,
@@ -41,13 +41,8 @@ class TherapistSession(APIView):
         session_use_case = GetTherapistSessionListUseCase(self.session_service)
         sessions = session_use_case.execute(user)
 
-        formatted_response = ApiResponse.format_response(
-            data=TherapySessionSerializer(sessions, many=True).data,
-            success=True,
-            message="Therapist sessions retrieved successfully."
-        )
-        return Response(formatted_response, status=status.HTTP_200_OK)
-
+        return ResponseWrapper.found(TherapySessionSerializer(sessions, many=True).data, entity='Therapist Sessions')
+    
     @extend_schema(
         summary="List Incoming Therapist Sessions",
         description="Retrieves a list of upcoming/incoming therapy sessions for the authenticated therapist.",
@@ -66,12 +61,11 @@ class TherapistSession(APIView):
         session_use_case = GetTherapistIncomingSessionsUseCase(self.session_service)
         sessions = session_use_case.execute(user)
 
-        formatted_response = ApiResponse.format_response(
-            data=TherapySessionSerializer(sessions, many=True).data,
-            success=True,
-            message="Incoming therapist sessions retrieved successfully."
+        return ResponseWrapper.found(
+            data=TherapySessionSerializer(sessions, many=True).data, 
+            entity='Incoming Therapist Sessions',
         )
-        return Response(formatted_response, status=status.HTTP_200_OK)
+
 
     @extend_schema(
         summary="Create a New Therapy Session",
@@ -94,12 +88,10 @@ class TherapistSession(APIView):
         session_use_case = CreateTherapistSessionUseCase(self.session_service)
         session = session_use_case.execute(serializer.validated_data)
 
-        formatted_response = ApiResponse.format_response(
+        return ResponseWrapper.created(
             data=TherapySessionSerializer(session).data,
-            success=True,
-            message="Therapy session created successfully."
+            entity='Therapy Session',
         )
-        return Response(formatted_response, status=status.HTTP_201_CREATED)
 
     @extend_schema(
         summary="Update an Existing Therapy Session",
@@ -123,9 +115,7 @@ class TherapistSession(APIView):
         session_use_case = UpdateTherapistSessionUseCase(self.session_service)
         session = session_use_case.execute(serializer.validated_data)
 
-        formatted_response = ApiResponse.format_response(
-            data=TherapySessionSerializer(session).data,
-            success=True,
-            message="Therapy session updated successfully."
+        return ResponseWrapper.updated(
+            data=TherapySessionSerializer(session).data, 
+            entity='Therapy Session'
         )
-        return Response(formatted_response, status=status.HTTP_200_OK)

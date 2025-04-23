@@ -5,7 +5,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, Sp
 
 
 from rest_framework.routers import DefaultRouter
-from patients.core.infrastructure.api.views.views import PatientViewSet
+from patients.core.infrastructure.api.views.patient_views import PatientViewSet
 from therapists.core.infrastructure.adapters.views.therapist_manager_views import TherapistViewSet
 from core.log.views import AuditLogListView
 from payments.core.infrastructure.api.views.payment_manager_view import PaymentViewSet

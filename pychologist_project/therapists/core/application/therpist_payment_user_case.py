@@ -1,41 +1,32 @@
+from payments.core.domain.repository.payment_repository import PaymentRepository
+from payments.models import Payment
+from core.exceptions.custom_exceptions import EntityNotFoundError
+from core.mappers.payment.payment_mappers import PaymentMapper
+from core.pagination.page_helper import PaginatedResponse, PaginationInput
+from ...models import Therapist
 
-class GetTherapistPaymentsUseCase:
-    def __init__(self, payment_repository):
+class GetTherapistPaymentsListUseCase:
+    def __init__(self, payment_repository : PaymentRepository):
         self.payment_repository = payment_repository
     
-    def execute(self, therapist):
-        return self.payment_repository.get_by_therapist(therapist)
+    def execute(self, therapist : Therapist, page_input : PaginationInput) -> PaginatedResponse[Payment]:
+        pageable_payments = self.payment_repository.get_pageable_by_therapist_id(therapist.id, page_input)
+        if len(pageable_payments.items) > 0:
+            return pageable_payments
+
+        items_mapped = [PaymentMapper.to_model(payment_entity) for payment_entity in pageable_payments.items]
+        pageable_payments.items = items_mapped
+        
+        return pageable_payments
+
 
 class GetTherapistPaymentUseCase:
-    def __init__(self, payment_repository):
+    def __init__(self, payment_repository : PaymentRepository):
         self.payment_repository = payment_repository
     
-    def execute(self, therapist, payment_id):
-        return self.payment_repository.get_by_therapist_and_id(therapist, payment_id)
+    def execute(self, therapist, payment_id) -> Payment:
+        payment = self.payment_repository.get_pageable_by_therapist_id(therapist.id, payment_id)
+        if not payment:
+            raise EntityNotFoundError('payment')
 
-
-class CreateTherapistPaymentUseCase:
-    def __init__(self, payment_service):
-        self.payment_service = payment_service
-    
-    def execute(self, payment_data):
-        return self.payment_service.create(payment_data)
-
-
-class UpdateTherapistPaymentUseCase:
-    def __init__(self, payment_service, payment_repository):
-        self.payment_service = payment_service
-        self.payment_repository = payment_repository
-    
-    def execute(self, payment_id, therapist, payment_data):
-        existing_payment = self.payment_repository.get_by_therapist_and_id(therapist, payment_id)
-
-        return self.payment_service.update_payment(payment_data, existing_payment)
-
-
-class DeleteTherapistPaymentUseCase:
-    def __init__(self, payment_service):
-        self.payment_service = payment_service
-    
-    def execute(self, therapist, payment_id):
-        self.payment_service.delete_payment(therapist, payment_id)
+        return PaymentMapper.to_model(payment)

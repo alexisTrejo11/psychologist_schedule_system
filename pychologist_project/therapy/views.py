@@ -3,13 +3,14 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
+import logging
 from .application.service import SessionService
 from .models import TherapySession
 from .serializers import TherapySessionSerializer
 from .infrastructure.django_session_repository import DjangoSessionRepository as sessionRepository
-from core.api_response.response import ApiResponse
-import logging
+from core.api_response.response import DjangoResponseWrapper as ResponseWrapper
 from core.swagger.schemas import TherapySessionResponseSchema
+
 
 audit_logger = logging.getLogger('audit_logger')
 
@@ -49,15 +50,19 @@ class TherapySessionViewSet(ModelViewSet):
         session_id = kwargs.get('pk')
         user = request.user if request.user.is_authenticated else None
         ip_address = request.META.get('REMOTE_ADDR')
+        
         audit_logger.info(f"GET request for session ID: {session_id}, User: {user}, IP: {ip_address}")
-        try:
-            session = self.service.get_session(int(session_id))
-            audit_logger.info(f"Session successfully retrieved with ID: {session_id}")
-            formatted_response = ApiResponse.format_response(self.get_serializer(session).data, success=True)
-            return Response(formatted_response)
-        except Exception as e:
-            formatted_response = ApiResponse.format_response(None, success=False, message=str(e))
-            return Response(formatted_response, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        session = self.service.get_session(int(session_id))
+
+        audit_logger.info(f"Session successfully retrieved with ID: {session_id}")
+        
+        return ResponseWrapper.found(
+            data=self.get_serializer(session).data,
+            entity='therrapy session',
+            param='ID',
+            value=session_id,
+        )
 
     @extend_schema(
         summary="Creates a new therapy session",
@@ -75,17 +80,18 @@ class TherapySessionViewSet(ModelViewSet):
         """
         user = request.user if request.user.is_authenticated else None
         ip_address = request.META.get('REMOTE_ADDR')
+        
         audit_logger.info(f"POST request to create a new session, User: {user}, IP: {ip_address}")
+        
         serializer = TherapySessionSerializer(data=request.data)
-        try:
-            serializer.is_valid(raise_exception=True)
-            session = self.service.schedule_session(serializer.validated_data)
-            audit_logger.info(f"New session created successfully with ID: {session.id}, User: {user}, IP: {ip_address}")
-            formatted_response = ApiResponse.format_response(self.get_serializer(session).data, success=True)
-            return Response(formatted_response, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            formatted_response = ApiResponse.format_response(None, success=False, message=str(e))
-            return Response(formatted_response, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        serializer.is_valid(raise_exception=True)
+        
+        session = self.service.schedule_session(serializer.validated_data)
+        
+        audit_logger.info(f"New session created successfully with ID: {session.id}, User: {user}, IP: {ip_address}")
+        
+        return ResponseWrapper.created(data=self.get_serializer(session).data, entity='therapy session')
+        
 
     @extend_schema(
         summary="Updates an existing therapy session",
@@ -114,19 +120,19 @@ class TherapySessionViewSet(ModelViewSet):
         session_id = kwargs.get('pk')
         user = request.user if request.user.is_authenticated else None
         ip_address = request.META.get('REMOTE_ADDR')
-        audit_logger.info(f"PUT request to update session ID: {session_id}, User: {user}, IP: {ip_address}")
         instance = self.get_object()
+        
+        audit_logger.info(f"PUT request to update session ID: {session_id}, User: {user}, IP: {ip_address}")
+        
         serializer = TherapySessionSerializer(data=request.data)
-        try:
-            serializer.is_valid(raise_exception=True)
-            audit_logger.info(serializer.validated_data)
-            session_updated = self.service.update(instance, serializer.validated_data)
-            audit_logger.info(f"Session updated successfully with ID: {session_id}, User: {user}, IP: {ip_address}")
-            formatted_response = ApiResponse.format_response(self.get_serializer(session_updated).data, success=True)
-            return Response(formatted_response, status=status.HTTP_200_OK)
-        except Exception as e:
-            formatted_response = ApiResponse.format_response(None, success=False, message=str(e))
-            return Response(formatted_response, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        serializer.is_valid(raise_exception=True)
+        
+        session_updated = self.service.update(instance, serializer.validated_data)
+        
+        audit_logger.info(f"Session updated successfully with ID: {session_id}, User: {user}, IP: {ip_address}")
+        
+        return ResponseWrapper.updated(data=self.get_serializer(session_updated).data, entity='Therapy Session')
+
 
     @extend_schema(
         summary="Soft deletes a therapy session",
@@ -153,15 +159,15 @@ class TherapySessionViewSet(ModelViewSet):
         """
         user = request.user if request.user.is_authenticated else None
         ip_address = request.META.get('REMOTE_ADDR')
+        
         audit_logger.info(f"POST request to soft delete session ID: {pk}, User: {user}, IP: {ip_address}")
-        try:
-            self.service.soft_delete(pk)
-            audit_logger.info(f"Session soft deleted successfully with ID: {pk}, User: {user}, IP: {ip_address}")
-            formatted_response = ApiResponse.format_response({"message": "Session logically deleted."}, success=True)
-            return Response(formatted_response, status=status.HTTP_200_OK)
-        except Exception as e:
-            formatted_response = ApiResponse.format_response(None, success=False, message=str(e))
-            return Response(formatted_response, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        self.service.soft_delete(pk)
+        
+        audit_logger.info(f"Session soft deleted successfully with ID: {pk}, User: {user}, IP: {ip_address}")
+        
+        return ResponseWrapper.no_content(message="Session logically deleted.")
+    
 
     @extend_schema(
         summary="Searches therapy sessions",
@@ -231,17 +237,16 @@ class TherapySessionViewSet(ModelViewSet):
     @action(detail=False, methods=['get'], url_path='search')
     def search_sessions(self, request):
         """
-        Searches therapy sessions based on dynamic filters.
+        Searches therapy sessions based on dynamic filters. To be Test the  filter params
         """
         user = request.user if request.user.is_authenticated else None
         ip_address = request.META.get('REMOTE_ADDR')
+
         audit_logger.info(f"GET request to search sessions, Filters: {request.query_params.dict()}, User: {user}, IP: {ip_address}")
-        try:
-            filters = request.query_params.dict()
-            sessions = self.service.search_sessions(filters)
-            audit_logger.info(f"Search successful, Results count: {len(sessions)}, User: {user}, IP: {ip_address}")
-            formatted_response = ApiResponse.format_response(self.get_serializer(sessions, many=True).data, success=True)
-            return Response(formatted_response, status=status.HTTP_200_OK)
-        except Exception as e:
-            formatted_response = ApiResponse.format_response(None, success=False, message=str(e))
-            return Response(formatted_response, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        filters = request.query_params.dict()
+        sessions = self.service.search_sessions(filters)
+        
+        audit_logger.info(f"Search successful, Results count: {len(sessions)}, User: {user}, IP: {ip_address}")
+        
+        return ResponseWrapper.found(data=self.get_serializer(sessions, many=True).data, entity='Therapy Sessions')

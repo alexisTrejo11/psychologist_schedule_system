@@ -1,6 +1,9 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.response import Response
+from core.api_response.response import DjangoResponseWrapper as ResponseWrapper
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
+from ..serializers.serializers import PatientSerializer
+from ...repositories.django_patient_repository import DjangoPatientRepository
 from ....application.use_cases.patient_use_cases import (
     CreatePatientUseCase,
     UpdatePatientUseCase,
@@ -11,13 +14,8 @@ from ....application.use_cases.patient_use_cases import (
     ActivatePatientUseCase,
     GetDeletedPatientsUseCase
 )
-from ..serializers.serializers import PatientSerializer
-from ....infrastructure.repositories.django_patient_repository import DjangoPatientRepository
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 
-class PatientViewSet(viewsets.ViewSet):
-    """API para la gestión de pacientes."""
-    
+class PatientViewSet(viewsets.ViewSet):    
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.repository = DjangoPatientRepository()
@@ -47,7 +45,7 @@ class PatientViewSet(viewsets.ViewSet):
 
         patient = self.create_patient_use_case.execute(serializer.validated_data)
         
-        return Response(self._entity_to_dict(patient), status=status.HTTP_201_CREATED)
+        return ResponseWrapper.created(data=self._entity_to_dict(patient), entity='Patient')
 
     @extend_schema(
         summary="Update an existing patient",
@@ -75,8 +73,7 @@ class PatientViewSet(viewsets.ViewSet):
 
         patient = self.update_patient_use_case.execute(int(pk), serializer.validated_data)
         
-        return Response(self._entity_to_dict(patient))
-
+        return ResponseWrapper.updated(self._entity_to_dict(patient), 'Patient')
     
     @extend_schema(
         summary="Retrieve a patient",
@@ -95,12 +92,11 @@ class PatientViewSet(viewsets.ViewSet):
             ),
         ],
     )
-    def retrieve(self, request, pk=None):
-        """Obtiene un paciente por su ID."""
+    def retrieve(self, request, pk):
         patient = self.get_patient_use_case.execute(int(pk))
-        return Response(self._entity_to_dict(patient))
+        return ResponseWrapper.found(self._entity_to_dict(patient), 'Patient', 'ID', pk)
 
-    
+
     @extend_schema(
         summary="List patients",
         description="Lists all patients with optional filters applied via query parameters.",
@@ -126,10 +122,9 @@ class PatientViewSet(viewsets.ViewSet):
         ],
     )
     def list(self, request):
-        """Lista todos los pacientes con filtros opcionales."""
         filters = request.query_params.dict()
         patients = self.search_patients_use_case.execute(filters)
-        return Response([self._entity_to_dict(patient) for patient in patients])
+        return ResponseWrapper.found([self._entity_to_dict(patient) for patient in patients], 'Patients')
     
     @extend_schema(
         summary="Soft delete a patient",
@@ -149,10 +144,9 @@ class PatientViewSet(viewsets.ViewSet):
         ],
     )
     @action(detail=True, methods=['post'])
-    def delete(self, request, pk=None):
-        """Elimina lógicamente un paciente."""
+    def delete(self, request, pk):
         self.delete_patient_use_case.execute(int(pk))
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return ResponseWrapper.no_content()
     
     
     @extend_schema(
@@ -173,10 +167,10 @@ class PatientViewSet(viewsets.ViewSet):
         ],
     )
     @action(detail=True, methods=['post'])
-    def deactivate(self, request, pk=None):
+    def deactivate(self, request, pk):
         """Desactiva un paciente."""
         self.deactivate_patient_use_case.execute(int(pk))
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return ResponseWrapper.no_content('Patient Succesfully Deactivated')
     
     @extend_schema(
         summary="Activate a patient",
@@ -199,7 +193,7 @@ class PatientViewSet(viewsets.ViewSet):
     def activate(self, request, pk=None):
         """Activa un paciente."""
         self.activate_patient_use_case.execute(int(pk))
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return ResponseWrapper.no_content('Patient Succesfully Activated')
     
     @extend_schema(
         summary="List deleted patients",
@@ -210,13 +204,11 @@ class PatientViewSet(viewsets.ViewSet):
     )
     @action(detail=False, methods=['get'])
     def deleted(self, request):
-        """Obtiene los pacientes eliminados lógicamente."""
         patients = self.get_deleted_patients_use_case.execute()
-        return Response([self._entity_to_dict(patient) for patient in patients])
+        return ResponseWrapper.found([self._entity_to_dict(patient) for patient in patients], 'Deleted Patients')
     
 
     def _entity_to_dict(self, patient):
-        """Convierte una entidad de paciente a un diccionario."""
         return {
             'id': patient.id,
             'name': patient.name,
@@ -224,9 +216,6 @@ class PatientViewSet(viewsets.ViewSet):
             'first_therapy': patient.first_therapy,
             'last_therapy': patient.last_therapy,
             'is_active': patient.is_active,
-            'created_at': patient.created_at,
-            'updated_at': patient.updated_at,
-            'deleted_at': patient.deleted_at,
             'user_id': patient.user_id
         }
 

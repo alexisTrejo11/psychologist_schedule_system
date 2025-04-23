@@ -16,6 +16,16 @@ class PaymentRepository(ABC):
         pass
 
     @abstractmethod
+    def get_by_id_and_therapist_id(self, payment_id: int, therapist_id: int) -> Optional[PaymentEntity]:
+        """Retrieves a payment by its ID and therapist ID."""
+        pass
+
+    @abstractmethod
+    def get_by_id_and_patient_id(self, payment_id: int, patient_id: int) -> Optional[PaymentEntity]:
+        """Retrieves a payment by its ID and patient ID."""
+        pass
+
+    @abstractmethod
     def get_pageable_by_therapist_id(self, therapist_id: int,  page_input : PaginationInput) -> PaginatedResponse[PaymentEntity]:
         """Retieves payments by therapist id using pagination search pattern"""
         pass

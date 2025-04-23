@@ -17,6 +17,9 @@ class GetPaymentUseCase:
 
     def execute(self, payment_id: int) -> PaymentModel:
         payment_model = self.repository.get_by_id(payment_id)
+        if not payment_model:
+            raise EntityNotFoundError("Payment", payment_id)
+        
         return PaymentMapper.to_model(payment_model)
 
 

@@ -65,3 +65,13 @@ class PaginationHelper:
                 page_size=pagination_input.page_size
             )
 
+
+def get_pagination_data(request) -> PaginationInput:
+    try:
+        page_number = int(request.query_params.get('page', 1))
+        page_size = int(request.query_params.get('page_size', 10))
+    except ValueError:
+        page_number = 1
+        page_size = 10
+
+    return PaginationInput(page_number=page_number, page_size=page_size)

@@ -1,9 +1,7 @@
-from rest_framework import status
-from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
-from core.api_response.response import ApiResponse
+from core.api_response.response import DjangoResponseWrapper as ResponseWrapper
 from .....models import Therapist
 from ..serializers.serializers import TherapistSerializer
 from ....application.therapist_use_case import CreateTherapistUseCase, UpdateTherapistUseCase, DeleteTherapistUseCase
@@ -46,19 +44,17 @@ class TherapistViewSet(ModelViewSet):
         ],
     )
     def retrieve(self, request, *args, **kwargs):
-        """
-        Retrieves a therapist by ID.
-        """
         therapist_id = kwargs.get('pk')
         audit_logger.info(f"TherapistViewSet: Retrieving therapist with ID: {therapist_id}, User: {request.user.id}")
         
         therapist = self.get_object() 
-        serializer = self.get_serializer(therapist)
         
         audit_logger.info(f"TherapistViewSet: Therapist retrieved successfully. ID: {therapist_id}")
         
-        formatted_response = ApiResponse.format_response(data=serializer.data, success=True, message="Therapist retrieved successfully.")
-        return Response(formatted_response, status=status.HTTP_200_OK)
+        return ResponseWrapper.found(
+            data=self.get_serializer(therapist).data, 
+            entity='therapist'
+        )
 
 
     @extend_schema(
@@ -77,16 +73,12 @@ class TherapistViewSet(ModelViewSet):
         
         therapists = self.get_queryset()
         
-        serializer = self.get_serializer(therapists, many=True)
-        
         audit_logger.info("TherapistViewSet: All therapists retrieved successfully.")
-        
-        formatted_response = ApiResponse.format_response(
-            data=serializer.data,
-            success=True,
-            message="All therapists retrieved successfully."
+    
+        return ResponseWrapper.found(
+            data=self.get_serializer(therapists, many=True).data,
+            entity='therapists'
         )
-        return Response(formatted_response, status=status.HTTP_200_OK)
 
     @extend_schema(
         summary="Create a new therapist",
@@ -99,9 +91,6 @@ class TherapistViewSet(ModelViewSet):
         },
     )
     def create(self, request, *args, **kwargs):
-        """
-        Creates a new therapist.
-        """
         audit_logger.info(f"TherapistViewSet: Creating new therapist with data: {request.data}, User: {request.user.id}")
         
         serializer = TherapistSerializer(data=request.data)
@@ -111,9 +100,7 @@ class TherapistViewSet(ModelViewSet):
 
         audit_logger.info(f"TherapistViewSet: Therapist created successfully. ID: {therapist.id}")
         
-        therapist_data = self.get_serializer(therapist).data
-        formatted_response = ApiResponse.format_response(data=therapist_data, success=True, message="Therapist created successfully.")
-        return Response(formatted_response, status=status.HTTP_201_CREATED)
+        return ResponseWrapper.created(data=self.get_serializer(therapist).data, entity='therapist')
         
     @extend_schema(
         summary="Update a therapist",
@@ -136,9 +123,6 @@ class TherapistViewSet(ModelViewSet):
         ],
     )
     def update(self, request, *args, **kwargs):
-        """
-        Updates an existing therapist.
-        """
         therapist_id = kwargs.get('pk')
         audit_logger.info(f"TherapistViewSet: Updating therapist with ID: {therapist_id}, data: {request.data}, User: {request.user.id}")
         
@@ -150,9 +134,10 @@ class TherapistViewSet(ModelViewSet):
         
         audit_logger.info(f"TherapistViewSet: Therapist updated successfully. ID: {therapist_id}")
         
-        therapist_data = self.get_serializer(therapist).data
-        formatted_response = ApiResponse.format_response(therapist_data, success=True, message="Therapist updated successfully.")
-        return Response(formatted_response, status=status.HTTP_200_OK)
+        return ResponseWrapper.updated(
+            data=self.get_serializer(therapist).data, 
+            entity='therapist'
+        )
 
     @extend_schema(
         summary="Delete a therapist",
@@ -173,9 +158,6 @@ class TherapistViewSet(ModelViewSet):
         ],
     )
     def destroy(self, request, *args, **kwargs):
-        """
-        Deletes a therapist.
-        """
         therapist_id = kwargs.get('pk')
         audit_logger.info(f"TherapistViewSet: Deleting therapist with ID: {therapist_id}, User: {request.user.id}")
         
@@ -184,5 +166,4 @@ class TherapistViewSet(ModelViewSet):
 
         audit_logger.info(f"TherapistViewSet: Therapist deleted successfully. ID: {therapist_id}")
         
-        formatted_response = ApiResponse.format_response(data=None, success=True, message="Therapist deleted successfully.")
-        return Response(formatted_response, status=status.HTTP_204_NO_CONTENT)
+        return ResponseWrapper.no_content(message="Therapist deleted successfully.")

@@ -44,6 +44,15 @@ class CreateTherapistUseCase:
         return TherapistMapper.to_model(created_entity)
 
 
+class GetTherapistByUserUseCase:
+    def __init__(self, therapist_repository : TherapistRepository):
+        self.therapist_repository = therapist_repository
+    
+    def execute(self, user) -> Therapist:
+        therapist_entity = self.therapist_repository.get_by_user_id(user.id)
+        return TherapistMapper.to_model(therapist_entity)
+
+
 class GetTherapistSessionsUseCase:
     def __init__(self, therapist_repository : TherapistRepository):
         self.therapist_repository = therapist_repository

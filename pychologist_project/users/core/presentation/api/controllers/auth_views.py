@@ -1,9 +1,9 @@
 from django.forms import ValidationError
-from rest_framework import status
-from rest_framework.response import Response
+from core.api_response.response import DjangoResponseWrapper as ResponseWrapper
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from drf_spectacular.utils import extend_schema, OpenApiTypes
+from rest_framework import status
 from .....core.presentation.api.serializers.serializers import SignupSerializer, LoginSerializer
 from core.api_response.response import ApiResponse
 import logging
@@ -147,8 +147,7 @@ class LogoutView(APIView):
         if not refresh_token:
             audit_logger.warning(f"LogoutView: Refresh token is required.")
             
-            formatted_response = ApiResponse.format_response(data=None, success=False, message="Refresh token is required")
-            return Response(formatted_response, status=status.HTTP_400_BAD_REQUEST)
+            return ResponseWrapper.failure(message="Refresh token is required.")
         
         from .....core.data.service.token_service import TokenService
         from .....core.domain.usecase.auth_use_case import LogoutUseCase
@@ -158,10 +157,9 @@ class LogoutView(APIView):
         logout_use_case = LogoutUseCase(token_service)
         logout_use_case.execute(refresh_token)
         
-        audit_logger.info(f"LogoutView: User successfully logged out.")
+        audit_logger.info(f"LogoutView:Session successfully logged out.")
         
-        formatted_response = ApiResponse.format_response(data={"message": "Session successfully logged out"}, success=True, message="User successfully logged out.")
-        return Response(formatted_response, status=status.HTTP_200_OK)
+        return ResponseWrapper.success(message="Session successfully logged out.")
         
 
 class RefreshSessionView(APIView):
@@ -195,8 +193,7 @@ class RefreshSessionView(APIView):
         if not refresh_token:
             audit_logger.warning(f"RefreshSessionView: Refresh token is required.")
             
-            formatted_response = ApiResponse.format_response(data=None, success=False, message="Refresh token is required.")
-            return Response(formatted_response, status=status.HTTP_400_BAD_REQUEST)
+            return ResponseWrapper.failure(message="Refresh token is required.", status=status.HTTP_400_BAD_REQUEST)
 
         from .....core.domain.usecase.auth_use_case import RefreshTokenUseCase
         from .....core.data.service.token_service import TokenService
@@ -211,7 +208,6 @@ class RefreshSessionView(APIView):
         
         audit_logger.info(f"RefreshSessionView: Session successfully refreshed.")
         
-        formatted_response = ApiResponse.format_response(data=session_refreshed, success=True, message="Session successfully refreshed.")
-        return Response(formatted_response, status=status.HTTP_200_OK)
+        return ResponseWrapper.success(session_refreshed, message="Session successfully refreshed")
 
 

@@ -6,6 +6,7 @@ from rest_framework.exceptions import ValidationError
 from .custom_exceptions import EntityNotFoundError, BusinessLogicError, InvalidOperationError
 from core.api_response.response import ApiResponse
 from datetime import datetime
+from core.api_response.response import DjangoResponseWrapper
 
 audit_logger = logging.getLogger('audit_logger')
 
@@ -36,27 +37,21 @@ def custom_exception_handler(exc, context):
             "ValidationError - View: %(view)s, User: %(user_id)s, IP: %(ip)s, Error: %(exception)s",
             log_context
         )
-        return Response(
-            ApiResponse.format_response(
-                data={"errors": exc.detail},
-                success=False,
-                message="Validation error"
-            ),
-            status=status.HTTP_400_BAD_REQUEST
-        )
 
+        return DjangoResponseWrapper.bad_request(
+            data={"errors": exc.detail},
+            message="Validation error", 
+        )
     elif isinstance(exc, EntityNotFoundError):
         audit_logger.warning(
             "EntityNotFoundError - View: %(view)s, User: %(user_id)s, IP: %(ip)s, Error: %(exception)s",
             log_context
         )
-        return Response(
-            ApiResponse.format_response(
-                data=None,
-                success=False,
-                message=str(exc)
-            ),
-            status=status.HTTP_404_NOT_FOUND
+        return DjangoResponseWrapper.not_found(
+            data=None,
+            entity=exc.entity_name,
+            param='ID',
+            value=exc.entity_id
         )
 
     elif isinstance(exc, (BusinessLogicError, ValueError)):
@@ -65,29 +60,14 @@ def custom_exception_handler(exc, context):
             log_context,
             exc_info=True
         )
-        return Response(
-            ApiResponse.format_response(
-                data=None,
-                success=False,
-                message=str(exc)
-            ),
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
+        return DjangoResponseWrapper.bad_request(message=str(exc))
     elif isinstance(exc, InvalidOperationError):
         audit_logger.error(
             "InvalidOperationError - View: %(view)s, User: %(user_id)s, IP: %(ip)s, Error: %(exception)s",
             log_context,
             exc_info=True
         )
-        return Response(
-            ApiResponse.format_response(
-                data=None,
-                success=False,
-                message=str(exc)
-            ),
-            status=status.HTTP_409_CONFLICT
-        )
+        return DjangoResponseWrapper.conflict(str(exc))
 
     elif response is None:
         audit_logger.critical(
@@ -95,21 +75,14 @@ def custom_exception_handler(exc, context):
             log_context,
             exc_info=True
         )
-        return Response(
-            ApiResponse.format_response(
-                data=None,
-                success=False,
-                message="Internal server error"
-            ),
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        return DjangoResponseWrapper.internal_server_error(
+            message="An unexpected error occurred. Please try again later."
         )
 
     # Format existing DRF responses with ApiResponse
     if response is not None:
-        response.data = ApiResponse.format_response(
+        response.data = Response(
             data=response.data if hasattr(response, 'data') else None,
-            success=False,
-            message=getattr(exc, 'message', str(exc))
         )
     
     return response
