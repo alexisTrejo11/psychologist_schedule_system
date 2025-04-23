@@ -4,7 +4,7 @@ from core.api_response.response import DjangoResponseWrapper as ResponseWrapper
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 from ..serializers.serializers import PatientSerializer
 from ...repositories.django_patient_repository import DjangoPatientRepository
-from ....application.use_cases.patient_use_cases import (
+from ....core.use_cases.patient_use_cases import (
     CreatePatientUseCase,
     UpdatePatientUseCase,
     GetPatientUseCase,

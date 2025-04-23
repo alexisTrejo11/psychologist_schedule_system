@@ -1,14 +1,16 @@
 from django.contrib import admin
 from django.urls import path, include, re_path
-
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
-
-
 from rest_framework.routers import DefaultRouter
-from patients.core.infrastructure.api.views.patient_views import PatientViewSet
-from therapists.core.infrastructure.adapters.views.therapist_manager_views import TherapistViewSet
+
+from patients.infrastructure.api.views.patient_views import PatientViewSet
+
 from core.log.views import AuditLogListView
+
+from therapists.core.infrastructure.adapters.views.therapist_manager_views import TherapistViewSet
+
 from payments.core.infrastructure.api.views.payment_manager_view import PaymentViewSet
+
 from therapy.views import TherapySessionViewSet
 
 from users.core.presentation.api.controllers.user_manager_views import UserViewSet
@@ -43,9 +45,6 @@ urlpatterns = [
 
     # General APIs
     path('', include(router.urls)),
-
-
-    # Payment 
 
     # Audit log
     path('audit-logs/', AuditLogListView.as_view(), name='audit-log-list'),

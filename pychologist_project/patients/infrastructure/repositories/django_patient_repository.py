@@ -1,9 +1,9 @@
 from typing import List, Dict, Optional, Any
 from datetime import datetime
 from django.db.models import Q
-from ...application.domain.entities.patient_entitiy import Patient as PatientEntity
-from ...application.domain.repository.patient_repository import PatientRepository
-from ....models import Patient as PatientModel
+from ...core.domain.entities.patient_entitiy import Patient as PatientEntity
+from ...core.domain.repository.patient_repository import PatientRepository
+from ...models import Patient as PatientModel
 from core.cache.cache_manager import CacheManager
 
 CACHE_PREFIX = 'patient_'
@@ -139,44 +139,3 @@ class DjangoPatientRepository(PatientRepository):
     def get_deleted(self) -> List[PatientEntity]:
         patients_deleted = PatientModel.objects.filter(deleted_at__isnull=False)
         return [self._to_entity(patient) for patient in patients_deleted]
-
-
-    def _to_entity(self, model: PatientModel) -> PatientEntity:
-        """Converts a Django model to a domain entity."""
-        return PatientEntity(
-            id=model.id,
-            name=model.name,
-            description=model.description,
-            first_therapy=model.first_therapy,
-            last_therapy=model.last_therapy,
-            is_active=model.is_active,
-            created_at=model.created_at,
-            updated_at=model.updated_at,
-            deleted_at=model.deleted_at,
-            user_id=model.user_id if hasattr(model, 'user_id') else None
-        )
-
-    def _to_model(self, entity: PatientEntity) -> PatientModel:
-        """Converts a domain entity to a Django model."""
-        if entity.id:
-            try:
-                model = PatientModel.objects.get(id=entity.id)
-                model.name = entity.name
-                model.description = entity.description
-                model.first_therapy = entity.first_therapy
-                model.last_therapy = entity.last_therapy
-                model.is_active = entity.is_active
-                model.deleted_at = entity.deleted_at
-                return model
-            except PatientModel.DoesNotExist:
-                pass
-
-        return PatientModel(
-            name=entity.name,
-            description=entity.description,
-            first_therapy=entity.first_therapy,
-            last_therapy=entity.last_therapy,
-            is_active=entity.is_active,
-            deleted_at=entity.deleted_at,
-            user_id=entity.user_id
-        )

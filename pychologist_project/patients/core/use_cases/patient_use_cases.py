@@ -1,33 +1,31 @@
 from typing import Dict, List, Optional, Any
 from datetime import datetime
-from ..domain.entities.patient_entitiy import Patient
-from ..domain.repository.patient_repository import PatientRepository
+from dataclasses import asdict
+from ...core.domain.entities.patient_entitiy import Patient
+from ...core.domain.repository.patient_repository import PatientRepository
+from ...core.mappers.payment_mappers import PatientMapper
+from ...application.dtos.patient_dto import PatientDTO
+from core.exceptions.custom_exceptions import EntityNotFoundError
 
-class CreatePatientUseCase:
-    """Caso de uso para crear un nuevo paciente."""
-    
+class CreatePatientUseCase:    
     def __init__(self, patient_repository: PatientRepository):
         self.patient_repository = patient_repository
     
-    def execute(self, data: Dict[str, Any]) -> Patient:
-        patient = Patient(
-            id=None,
-            name=data.get('name', ''),
-            description=data.get('description', ''),
-            is_active=True,
-            created_at=datetime.now(),
-            updated_at=datetime.now()
-        )
-        return self.patient_repository.create(patient)
+    def execute(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        patient = PatientMapper.dict_to_domain(data)
 
+        patient_entity = self.patient_repository.create(patient)
+        
+        return asdict(PatientMapper.to_dto(patient_entity))
 
 class UpdatePatientUseCase:
-    """Caso de uso para actualizar un paciente existente."""
     def __init__(self, patient_repository: PatientRepository):
         self.patient_repository = patient_repository
     
-    def execute(self, patient_id: int, data: Dict[str, Any]) -> Patient:
+    def execute(self, patient_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
         patient = self.patient_repository.get_by_id(patient_id)
+        if not patient:
+            raise EntityNotFoundError('Patient', patient_id)
         
         patient.name = data.get('name', patient.name)
         patient.description = data.get('description', patient.description)
@@ -38,22 +36,22 @@ class UpdatePatientUseCase:
         if 'last_therapy' in data:
             patient.last_therapy = data.get('last_therapy')
         
-        return self.patient_repository.update(patient)
+        patient_entity = self.patient_repository.update(patient)
+        
+        return asdict(PatientMapper.to_dto(patient_entity))
 
 
-class GetPatientUseCase:
-    """Caso de uso para obtener un paciente por su ID."""
-    
+class GetPatientUseCase:    
     def __init__(self, patient_repository: PatientRepository):
         self.patient_repository = patient_repository
     
-    def execute(self, patient_id: int) -> Patient:
-        return self.patient_repository.get_by_id(patient_id)
+    def execute(self, patient_id: int) -> Dict[str, Any]:
+        patient_entity = self.patient_repository.get_by_id(patient_id)
+        
+        return asdict(PatientMapper.to_dto(patient_entity))
 
 
-class SearchPatientsUseCase:
-    """Caso de uso para buscar pacientes con filtros."""
-    
+class SearchPatientsUseCase:    
     def __init__(self, patient_repository: PatientRepository):
         self.patient_repository = patient_repository
     
@@ -61,41 +59,40 @@ class SearchPatientsUseCase:
         return self.patient_repository.search(filters)
 
 
-class DeletePatientUseCase:
-    """Caso de uso para eliminar lógicamente un paciente."""
-    
+class DeletePatientUseCase:    
     def __init__(self, patient_repository: PatientRepository):
         self.patient_repository = patient_repository
     
     def execute(self, patient_id: int) -> None:
+        self.patient_repository.get_by_id(patient_id)
+        
         self.patient_repository.delete(patient_id)
 
 
-class DeactivatePatientUseCase:
-    """Caso de uso para desactivar un paciente."""
-    
+class DeactivatePatientUseCase:    
     def __init__(self, patient_repository: PatientRepository):
         self.patient_repository = patient_repository
     
     def execute(self, patient_id: int) -> None:
+        self.patient_repository.get_by_id(patient_id)
+
         self.patient_repository.deactivate(patient_id)
 
 
-class ActivatePatientUseCase:
-    """Caso de uso para activar un paciente."""
-    
+class ActivatePatientUseCase:    
     def __init__(self, patient_repository: PatientRepository):
         self.patient_repository = patient_repository
     
     def execute(self, patient_id: int) -> None:
+        self.patient_repository.get_by_id(patient_id)
+
         self.patient_repository.activate(patient_id)
 
 
-class GetDeletedPatientsUseCase:
-    """Caso de uso para obtener pacientes eliminados."""
-    
+class GetDeletedPatientsUseCase:    
     def __init__(self, patient_repository: PatientRepository):
         self.patient_repository = patient_repository
     
     def execute(self) -> List[Patient]:
         return self.patient_repository.get_deleted()
+
